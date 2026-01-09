@@ -4,9 +4,13 @@ import { LogOut, Shield, LayoutGrid } from 'lucide-react';
 
 const Layout = () => {
     const navigate = useNavigate();
-    // TODO: Implement actual logout logic
-    const handleLogout = () => {
-        console.log('Logging out...');
+    // Actual logout logic
+    const handleLogout = async () => {
+        try {
+            await fetch('/api/auth/logout', { method: 'POST' });
+        } catch (error) {
+            console.error('Logout failed', error);
+        }
         localStorage.removeItem('user');
         navigate('/login');
     };

@@ -35,12 +35,20 @@ export default async function handler(req, res) {
         }
 
         // Successful login
-        // Set a simple session cookie or return user data
-        // For this prototype, we'll return user data and handle session on client side (localStorage) or simple cookie if possible.
-        // Setting a cookie is better for security.
+        const sessionData = JSON.stringify({
+            email: user.email,
+            role: user.role || 'user',
+            apps: user.apps || []
+        });
 
-        // const token = 'dummy-token'; // In real app, JWT
-        // res.setHeader('Set-Cookie', serialize('auth_token', token, { path: '/', httpOnly: true }));
+        const token = Buffer.from(sessionData).toString('base64');
+
+        // Determine domain based on environment (simplified for prototype)
+        // In Vercel dev, host is localhost. In prod, wildtype.app
+        const isProd = process.env.NODE_ENV === 'production';
+        const domainAttribute = isProd ? 'Domain=.wildtype.app;' : '';
+
+        res.setHeader('Set-Cookie', `interapp_session=${token}; Path=/; ${domainAttribute} HttpOnly; SameSite=Lax; Max-Age=86400`);
 
         return res.status(200).json({
             message: 'Login successful',
