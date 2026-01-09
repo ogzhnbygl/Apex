@@ -62,7 +62,7 @@ export default async function handler(req, res) {
                 username: email,
                 password, // TODO: Hash this!
                 role: role || 'user',
-                apps: apps || ['Dispo'],
+                apps: apps || ['dispo'],
                 createdAt: new Date()
             };
 

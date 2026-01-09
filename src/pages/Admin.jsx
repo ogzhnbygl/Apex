@@ -9,7 +9,7 @@ const Admin = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user', apps: [] });
 
-    const availableApps = ['Dispo']; // Only Dispo for now
+    const availableApps = ['dispo']; // Only Dispo for now
 
     React.useEffect(() => {
         fetchUsers();
@@ -31,7 +31,7 @@ const Admin = () => {
 
     const handleOpenAdd = () => {
         setModalMode('add');
-        setFormData({ name: '', email: '', password: '', role: 'user', apps: ['Dispo'] }); // Default to Dispo
+        setFormData({ name: '', email: '', password: '', role: 'user', apps: ['dispo'] }); // Default to dispo
         setShowModal(true);
     };
 

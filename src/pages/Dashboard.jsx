@@ -27,7 +27,7 @@ const Dashboard = () => {
     const apps = allApps.filter(app => {
         if (!user) return false; // User should always be available if RequireAuth handles it
         if (user.role === 'admin') return true;
-        return user.apps?.includes(app.id);
+        return user.apps?.some(a => a.toLowerCase() === app.id.toLowerCase());
     });
 
     return (
