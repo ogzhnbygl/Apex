@@ -1,17 +1,80 @@
-# Apex
- 
-This project is a React + Vite application with a Vercel Serverless Functions backend.
-It uses MongoDB for data persistence.
+# Apex - Merkezi Yönetim ve Yetkilendirme Sistemi
 
-Currently, two official plugins are available:
+Apex, organizasyon içindeki birden fazla web uygulamasına (laboratuvar yönetim sistemleri vb.) tek bir noktadan erişim, kimlik doğrulama ve yetkilendirme hizmeti sağlayan merkezi bir yönetim panelidir.
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) (or [oxc](https://oxc.rs) when used in [rolldown-vite](https://vite.dev/guide/rolldown)) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 🚀 Özellikler
 
-## React Compiler
+- **Merkezi Kimlik Doğrulama (SSO Benzeri Yapı):**
+    - `wildtype.app` ana domaini üzerinde çalışan güvenli oturum yönetimi.
+    - Alt uygulamalar (örn. `dispo.wildtype.app`) ile paylaşılan HttpOnly cookie tabanlı oturum.
+    - CORS ve domain güvenliği ile korunan yetkilendirme API'sı.
+- **Modüler Uygulama Yönetimi:**
+    - Kullanıcıların yetkilerine göre erişebilecekleri uygulamaları listeleyen Dashboard.
+    - Yeni uygulamaların ve modüllerin kolayca sisteme entegre edilebilmesi.
+- **Kullanıcı ve Rol Yönetimi:**
+    - **Admin Paneli:** Kullanıcı oluşturma, düzenleme ve silme işlemleri.
+    - **Esnek Yetkilendirme:** Kullanıcılara özel uygulama bazlı erişim izinleri (örn. Sadece "Dispo" modülüne erişim).
+    - Standart "User" ve tam yetkili "Admin" rolleri.
+- **Modern ve Güvenli Altyapı:**
+    - Güçlü şifreleme ve güvenlik standartlarına uygun mimari.
+    - Vercel üzerinde yüksek performanslı çalışma.
 
-The React Compiler is not enabled on this template because of its impact on dev & build performances. To add it, see [this documentation](https://react.dev/learn/react-compiler/installation).
+## 🛠️ Teknolojiler
 
-## Expanding the ESLint configuration
+Apex, modern web standartlarına uygun olarak geliştirilmiştir:
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+- **Frontend:**
+    - [React](https://react.dev/) - Arayüz geliştirme
+    - [Vite](https://vitejs.dev/) - Yüksek performanslı build aracı
+    - [Tailwind CSS](https://tailwindcss.com/) - Hızlı ve modern stillendirme
+    - [Lucide React](https://lucide.dev/) - Modern ikon seti
+- **Backend:**
+    - [Vercel Serverless Functions](https://vercel.com/docs/functions) - Ölçeklenebilir API mimarisi
+- **Veritabanı:**
+    - [MongoDB](https://www.mongodb.com/) - Esnek ve güçlü NoSQL veritabanı
+
+## 📦 Kurulum
+
+Projeyi geliştirmek veya kendi ortamınızda çalıştırmak için:
+
+### Ön Gereksinimler
+
+- Node.js (v18+)
+- MongoDB veritabanı
+
+### Adımlar
+
+1. **Repoyu klonlayın:**
+   ```bash
+   git clone <repo-url>
+   cd Apex
+   ```
+
+2. **Bağımlılıkları yükleyin:**
+   ```bash
+   npm install
+   ```
+
+3. **Çevresel Değişkenler:**
+   `.env` dosyasını oluşturun:
+   ```env
+   MONGODB_URI=mongodb+srv://...
+   ```
+
+4. **Geliştirme Sunucusunu Başlatın:**
+   API fonksiyonlarının da çalışması için Vercel CLI kullanılması önerilir:
+   ```bash
+   npx vercel dev
+   ```
+   Normal frontend geliştirme için:
+   ```bash
+   npm run dev
+   ```
+
+## 📂 Proje Yapısı
+
+- `/src`: React frontend kodları (Sayfalar, Bileşenler).
+- `/api`: Serverless backend fonksiyonları (Auth, Admin).
+- `/public`: Statik dosyalar.
+
+Detaylı teknik bilgi için [TECHNICAL.md](./technical.md) dosyasına bakabilirsiniz.
