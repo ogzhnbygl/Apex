@@ -21,7 +21,7 @@ const Dashboard = () => {
             color: 'from-emerald-500 to-teal-600'
         },
         {
-            id: 'lab',
+            id: 'labproject',
             name: 'LabProject',
             description: 'Research Project & Ethics Management',
             url: 'https://labproject.wildtype.app',
