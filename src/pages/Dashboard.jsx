@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Box } from 'lucide-react';
+import { ExternalLink, Box, FlaskConical } from 'lucide-react';
 
 const Dashboard = () => {
     const [user, setUser] = React.useState(null);
@@ -20,7 +20,14 @@ const Dashboard = () => {
             icon: Box,
             color: 'from-emerald-500 to-teal-600'
         },
-        // Add more apps here
+        {
+            id: 'lab',
+            name: 'LabProject',
+            description: 'Research Project & Ethics Management',
+            url: 'https://labproject.wildtype.app',
+            icon: FlaskConical,
+            color: 'from-blue-500 to-indigo-600'
+        }
     ];
 
     // Filter apps based on user access
