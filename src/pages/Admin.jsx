@@ -9,7 +9,7 @@ const Admin = () => {
     const [currentUser, setCurrentUser] = useState(null);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user', apps: [] });
 
-    const availableApps = ['dispo', 'labproject']; // Added LabProject
+    const availableApps = ['dispo', 'labproject', 'silo']; // Added Silo
 
     React.useEffect(() => {
         fetchUsers();

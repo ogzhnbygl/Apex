@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Box, FlaskConical } from 'lucide-react';
+import { ExternalLink, Box, FlaskConical, Package } from 'lucide-react';
 
 const Dashboard = () => {
     const [user, setUser] = React.useState(null);
@@ -27,6 +27,14 @@ const Dashboard = () => {
             url: 'https://labproject.wildtype.app',
             icon: FlaskConical,
             color: 'from-blue-500 to-indigo-600'
+        },
+        {
+            id: 'silo',
+            name: 'Silo',
+            description: 'Yem Stok Yönetimi',
+            url: 'https://silo.wildtype.app',
+            icon: Package,
+            color: 'from-orange-500 to-red-600'
         }
     ];
 
