@@ -1,36 +1,46 @@
-# Apex - Blueprint & Yol Haritası
-
-Apex, sadece bir kullanıcı yönetim sistemi değil, büyüyen bir ekosistemin omurgası olarak tasarlanmıştır. Bu doküman, projenin vizyonunu ve gelecekteki genişleme planlarını içerir.
+# Apex - Vizyon ve Blueprint
 
 ## 🌟 Vizyon
 
-Apex'in temel amacı, laboratuvar ve araştırma süreçlerindeki farklı ihtiyaçları karşılayan **mikro-uygulamaları** tek bir çatı altında toplamaktır. Kullanıcılar, tek bir hesapla giriş yaparak yetkili oldukları tüm araçlara (Dispo, Stok Takip, Raporlama vb.) erişebilmelidir.
+Apex, organizasyonun dijital omurgasıdır. Sadece bir kullanıcı yönetim sistemi değil, büyüyen bir ekosistemin **Merkezi Sinir Sistemi** olarak tasarlanmıştır.
 
-## 🧩 Modüler Mimari
+Temel amacı, laboratuvar ve araştırma süreçlerindeki farklı ihtiyaçları karşılayan **mikro-uygulamaları** (Dispo, Circa, Silo, LabProject) tek bir çatı altında toplamaktır. Kullanıcılar, tek bir hesapla giriş yaparak yetkili oldukları tüm araçlara sorunsuz bir şekilde erişebilmelidir.
 
+> "Apex, karmaşayı düzene sokan merkezdir."
+
+## 🏗️ Mimari
+
+Apex, **Modüler Monolit** benzeri, ancak fiziksel olarak ayrık bir mikro-uygulama (micro-app) mimarisini benimser.
+
+### Modüler Yapı
 Sistem, yeni modüllerin "Tak-Çıkar" mantığıyla eklenebileceği şekilde kurgulanmıştır.
 
-### Mevcut Modüller
 1.  **Core (Apex):** Kimlik yönetimi, Dashboard, Admin Paneli.
-2.  **Dispo:** Laboratuvar hayvanları raporlama ve takip sistemi.
-
-### Planlanan Modüller (Örnekler)
-- **Inventory:** Kimyasal ve sarf malzeme stok takibi.
-- **Scheduler:** Laboratuvar ekipmanları için rezervasyon sistemi.
-- **EthicApp:** Etik kurul başvuru ve onay süreçleri.
-
-## 📈 Genişleme Stratejisi
-
-1.  **API Gateway:** İleride tüm modüllerin API'lerinin tek bir gateway üzerinden yönetilmesi.
-2.  **SSO Entegrasyonu:** Kurumsal LDAP veya Google Auth entegrasyonları.
-3.  **Cross-App Veri Paylaşımı:** Modüller arasında veri akışını sağlayacak olay tabanlı (Event-driven) iletişim.
-4.  **Audit Logs:** Sistemdeki tüm hareketlerin (kim, ne zaman, hangi modüle girdi) merkezi olarak loglanması.
+2.  **Bağımlı Modüller:**
+    - **Dispo:** Laboratuvar hayvanları raporlama.
+    - **Circa:** Mesai ve vardiya takibi.
+    - **Silo:** Stok ve envanter yönetimi.
+    - **LabProject:** Proje ve etik kurul yönetimi.
 
 ## 🎨 Tasarım Prensipleri
 
 - **Tutarlılık:** Tüm modüller, Apex'in belirlediği tasarım dilini (Design System) kullanmalıdır.
 - **Bağımsızlık:** Bir modüldeki hata, diğerlerini veya Apex'i etkilememelidir (İzole çalışma).
-- **Kullanıcı Odaklılık:** Karmaşık süreçleri basitleştiren, temiz arayüzler.
+- **Kullanıcı Odaklılık:** Karmaşık süreçleri basitleştiren, temiz ve modern arayüzler.
+- **Güvenlik:** Her zaman, her yerde "önce güvenlik" yaklaşımı.
 
----
-> "Apex, karmaşayı düzene sokan merkezdir."
+## 🗺️ Yol Haritası (Roadmap)
+
+### Faz 1: Temel Altyapı (Tamamlandı ✅)
+- [x] Merkezi kimlik doğrulama (SSO).
+- [x] Dashboard ve uygulama yönlendirmesi.
+- [x] Temel kullanıcı yönetimi (Admin Paneli).
+
+### Faz 2: Entegrasyon ve Genişleme (Devam Ediyor 🚧)
+- [ ] **API Gateway:** İleride tüm modüllerin API'lerinin tek bir gateway üzerinden yönetilmesi.
+- [ ] **Cross-App Veri Paylaşımı:** Modüller arasında veri akışını sağlayacak olay tabanlı (Event-driven) iletişim.
+- [ ] **Audit Genişlemesi:** Sistemdeki tüm hareketlerin (kim, ne zaman, hangi modüle girdi) merkezi olarak loglanması.
+
+### Faz 3: Kurumsal Özellikler
+- [ ] **SSO Entegrasyonu:** LDAP / Google Auth gibi kurumsal kimlik sağlayıcıları ile entegrasyon.
+- [ ] **Gelişmiş Analitik:** Tüm modüllerden toplanan verilerle organizasyonel içgörüler sunan raporlar.

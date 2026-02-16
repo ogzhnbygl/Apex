@@ -1,14 +1,16 @@
 # Apex - Teknik Dokümantasyon
 
+Bu doküman, Apex projesinin teknik mimarisini, veritabanı yapısını ve API referanslarını detaylandırır.
+
 ## 🏗️ Mimari Genel Bakış
 
 Apex, "Hub & Spoke" modeline benzer bir mimari ile çalışır. Kendisi merkezi otorite (Hub) olarak görev yapar ve bağlı modüller (Spoke) için kimlik doğrulama sağlar.
 
 ### Kimlik Doğrulama Akışı
-1.  Kullanıcı `wildtype.app` (Apex) üzerinden giriş yapar.
-2.  Backend, `interapp_session` adında, `Domain=.wildtype.app` özelliğine sahip bir **HttpOnly Cookie** oluşturur.
-3.  Bu cookie, tüm alt domainler (`*.wildtype.app`) tarafından okunabilir/gönderilebilir ancak JavaScript ile erişilemez (XSS koruması).
-4.  Alt uygulamalar (örn. Dispo), açılışta Apex API'sine (`/api/auth/me`) istek atarak oturumu doğrular.
+1.  **Giriş:** Kullanıcı `wildtype.app` (Apex) üzerinden giriş yapar.
+2.  **Cookie Oluşturma:** Backend, `interapp_session` adında, `Domain=.wildtype.app` özelliğine sahip bir **HttpOnly Cookie** oluşturur.
+3.  **Paylaşım:** Bu cookie, tüm alt domainler (`*.wildtype.app`) tarafından okunabilir/gönderilebilir ancak JavaScript ile erişilemez (XSS koruması).
+4.  **Doğrulama:** Alt uygulamalar (örn. Dispo), açılışta Apex API'sine (`/api/auth/me`) istek atarak oturumu doğrular.
 
 ## 📂 Dizin Yapısı
 
@@ -29,7 +31,7 @@ Apex/
 
 Veriler **MongoDB** üzerinde `Apex_db` veritabanında tutulur.
 
-### `users` Koleksiyonu
+### Koleksiyon: `users`
 
 Kullanıcı bilgilerini ve yetkilerini tutar.
 
@@ -37,10 +39,10 @@ Kullanıcı bilgilerini ve yetkilerini tutar.
 | :--- | :--- | :--- |
 | `_id` | ObjectId | Benzersiz kimlik |
 | `email` | String | Kullanıcı e-postası (Giriş anahtarı) |
-| `password` | String | Kullanıcı şifresi |
+| `password` | String | Kullanıcı şifresi (Hashlenmiş) |
 | `name` | String | Ad Soyad |
 | `role` | String | Rol (`admin`, `user`) |
-| `apps` | Array<String> | Erişim izni olan uygulamalar (örn. `['dispo']`) |
+| `apps` | Array<String> | Erişim izni olan uygulamalar (örn. `['dispo', 'circa', 'silo']`) |
 | `createdAt` | Date | Oluşturulma tarihi |
 
 ## 🔌 API Referansı
@@ -55,7 +57,7 @@ Kullanıcı bilgilerini ve yetkilerini tutar.
 
 - **GET** `/api/admin/users`: Tüm kullanıcıları listeler.
 - **POST** `/api/admin/users`: Yeni kullanıcı oluşturur.
-- **PUT** `/api/admin/users`: Kullanıcı yetkilerini günceller.
+- **PUT** `/api/admin/users`: Kullanıcı yetkilerini ve bilgilerini günceller.
 - **DELETE** `/api/admin/users`: Kullanıcı siler.
 
 ## 🔐 Güvenlik Önlemleri

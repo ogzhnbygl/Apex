@@ -1,12 +1,12 @@
 # Apex - Merkezi Yönetim ve Yetkilendirme Sistemi
 
-Apex, organizasyon içindeki birden fazla web uygulamasına (laboratuvar yönetim sistemleri vb.) tek bir noktadan erişim, kimlik doğrulama ve yetkilendirme hizmeti sağlayan merkezi bir yönetim panelidir.
+Apex, organizasyon içindeki birden fazla web uygulamasına (laboratuvar yönetim sistemleri vb.) tek bir noktadan erişim, kimlik doğrulama ve yetkilendirme hizmeti sağlayan merkezi bir yönetim panelidir. Ekosistemin "Core" (Çekirdek) bileşeni olarak görev yapar.
 
 ## 🚀 Özellikler
 
 - **Merkezi Kimlik Doğrulama (SSO Benzeri Yapı):**
     - `wildtype.app` ana domaini üzerinde çalışan güvenli oturum yönetimi.
-    - Alt uygulamalar (örn. `dispo.wildtype.app`) ile paylaşılan HttpOnly cookie tabanlı oturum.
+    - Alt uygulamalar (örn. `dispo.wildtype.app`, `circa.wildtype.app`) ile paylaşılan HttpOnly cookie tabanlı oturum.
     - CORS ve domain güvenliği ile korunan yetkilendirme API'sı.
 - **Modüler Uygulama Yönetimi:**
     - Kullanıcıların yetkilerine göre erişebilecekleri uygulamaları listeleyen Dashboard.
@@ -17,28 +17,27 @@ Apex, organizasyon içindeki birden fazla web uygulamasına (laboratuvar yöneti
     - Standart "User" ve tam yetkili "Admin" rolleri.
 - **Modern ve Güvenli Altyapı:**
     - Güçlü şifreleme ve güvenlik standartlarına uygun mimari.
-    - Vercel üzerinde yüksek performanslı çalışma.
+    - Vercel üzerinde yüksek performanslı, sunucusuz (serverless) çalışma.
 
 ## 🛠️ Teknolojiler
 
 Apex, modern web standartlarına uygun olarak geliştirilmiştir:
 
-- **Frontend:**
-    - [React](https://react.dev/) - Arayüz geliştirme
-    - [Vite](https://vitejs.dev/) - Yüksek performanslı build aracı
-    - [Tailwind CSS](https://tailwindcss.com/) - Hızlı ve modern stillendirme
-    - [Lucide React](https://lucide.dev/) - Modern ikon seti
-- **Backend:**
-    - [Vercel Serverless Functions](https://vercel.com/docs/functions) - Ölçeklenebilir API mimarisi
-- **Veritabanı:**
-    - [MongoDB](https://www.mongodb.com/) - Esnek ve güçlü NoSQL veritabanı
+### Frontend
+- **Framework:** [React](https://react.dev/)
+- **Build Tool:** [Vite](https://vitejs.dev/)
+- **Styling:** [Tailwind CSS](https://tailwindcss.com/)
+- **Icons:** [Lucide React](https://lucide.dev/)
+
+### Backend
+- **Runtime:** [Vercel Serverless Functions](https://vercel.com/docs/functions)
+- **Database:** [MongoDB](https://www.mongodb.com/)
 
 ## 📦 Kurulum
 
 Projeyi geliştirmek veya kendi ortamınızda çalıştırmak için:
 
 ### Ön Gereksinimler
-
 - Node.js (v18+)
 - MongoDB veritabanı
 
@@ -56,7 +55,7 @@ Projeyi geliştirmek veya kendi ortamınızda çalıştırmak için:
    ```
 
 3. **Çevresel Değişkenler:**
-   `.env` dosyasını oluşturun:
+   `.env` dosyasını oluşturun ve gerekli değişkenleri tanımlayın:
    ```env
    MONGODB_URI=mongodb+srv://...
    ```
@@ -66,10 +65,7 @@ Projeyi geliştirmek veya kendi ortamınızda çalıştırmak için:
    ```bash
    npx vercel dev
    ```
-   Normal frontend geliştirme için:
-   ```bash
-   npm run dev
-   ```
+   *Alternatif (Sadece Frontend):* `npm run dev`
 
 ## 📂 Proje Yapısı
 
@@ -77,4 +73,8 @@ Projeyi geliştirmek veya kendi ortamınızda çalıştırmak için:
 - `/api`: Serverless backend fonksiyonları (Auth, Admin).
 - `/public`: Statik dosyalar.
 
-Detaylı teknik bilgi için [TECHNICAL.md](./technical.md) dosyasına bakabilirsiniz.
+Detaylı teknik bilgi için [TECHNICAL.md](./TECHNICAL.md) dosyasına bakabilirsiniz.
+
+## 📜 Lisans
+
+Bu proje özel mülkiyettir. İzinsiz kopyalanması ve dağıtılması yasaktır.
