@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Box, FlaskConical, Package, Clock } from 'lucide-react';
+import { ExternalLink, Box, FlaskConical, Package, Clock, MapPin } from 'lucide-react';
 
 const Dashboard = () => {
     const [user, setUser] = React.useState(null);
@@ -43,6 +43,14 @@ const Dashboard = () => {
             url: 'https://circa.wildtype.app',
             icon: Clock,
             color: 'from-purple-500 to-pink-600'
+        },
+        {
+            id: 'locus',
+            name: 'Locus',
+            description: 'Vivaryum Dijital İkiz Sistemi',
+            url: 'https://locus.wildtype.app',
+            icon: MapPin,
+            color: 'from-fuchsia-500 to-violet-600'
         }
     ];
 
