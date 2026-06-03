@@ -32,7 +32,8 @@ export default async function handler(req, res) {
         const sessionPayload = {
             email: user.email,
             role: user.role || 'user',
-            apps: user.apps || []
+            apps: user.apps || [],
+            name: user.name || user.email.split('@')[0]
         };
 
         const JWT_SECRET = process.env.JWT_SECRET || 'wildtype-super-secret-key-123';

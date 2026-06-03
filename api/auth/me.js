@@ -21,7 +21,8 @@ export default async function handler(req, res) {
             return res.status(200).json({
                 email: user.email,
                 role: user.role,
-                apps: user.apps
+                apps: user.apps,
+                name: user.name || user.email.split('@')[0]
             });
         }
 

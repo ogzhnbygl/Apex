@@ -45,7 +45,7 @@ export async function verifyAuth(req, requiredApp = null) {
             const db = client.db('Apex_db');
             const user = await db.collection('users').findOne({ email });
             if (user) {
-                return { email: user.email, role: user.role, apps: user.apps };
+                return { email: user.email, role: user.role, apps: user.apps, name: user.name || user.email.split('@')[0] };
             }
         }
     }
@@ -80,5 +80,5 @@ export async function verifyAuth(req, requiredApp = null) {
         }
     }
     
-    return { email: user.email, role: user.role, apps: user.apps };
+    return { email: user.email, role: user.role, apps: user.apps, name: user.name || user.email.split('@')[0] };
 }
