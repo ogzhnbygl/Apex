@@ -1,15 +1,43 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
 
 const RequireAuth = ({ children }) => {
     const location = useLocation();
-    const userString = localStorage.getItem('user');
-    const user = userString ? JSON.parse(userString) : null;
+    const [checking, setChecking] = useState(true);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-    if (!user) {
-        // Redirect to the /login page, but save the current location they were
-        // trying to go to when they were redirected. This allows us to send them
-        // along to that page after they login, which is a nicer user experience.
+    useEffect(() => {
+        const verify = async () => {
+            try {
+                const res = await fetch('/api/auth/me');
+                if (res.ok) {
+                    const data = await res.json();
+                    localStorage.setItem('user', JSON.stringify(data));
+                    setIsAuthenticated(true);
+                } else {
+                    localStorage.removeItem('user');
+                    setIsAuthenticated(false);
+                }
+            } catch (err) {
+                console.error(err);
+                const userString = localStorage.getItem('user');
+                setIsAuthenticated(!!userString);
+            } finally {
+                setChecking(false);
+            }
+        };
+        verify();
+    }, [location.pathname]);
+
+    if (checking) {
+        return (
+            <div className="min-h-screen flex items-center justify-center bg-slate-50">
+                <div className="text-slate-500 animate-pulse">Kontrol ediliyor...</div>
+            </div>
+        );
+    }
+
+    if (!isAuthenticated) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
