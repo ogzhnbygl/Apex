@@ -1,3 +1,4 @@
+import bcrypt from 'bcryptjs';
 import clientPromise from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
@@ -21,9 +22,11 @@ export default async function handler(req, res) {
             return res.status(409).json({ message: 'User already exists' });
         }
 
+        const hashedPassword = await bcrypt.hash(password, 10);
+
         const newUser = {
             email,
-            password, // TODO: Hash this!
+            password: hashedPassword,
             role: 'user', // Default role
             apps: [], // Default apps access
             createdAt: new Date()

@@ -1,7 +1,26 @@
+import bcrypt from 'bcryptjs';
 import clientPromise from '../lib/mongodb.js';
+import { verifyAuth } from '../lib/auth.js';
 
 export default async function handler(req, res) {
-    // TODO: Add middleware to check if user is admin (check cookie/token)
+    // Enable CORS for dashboard and other apps
+    const origin = req.headers.origin;
+    if (origin && (origin.endsWith('.wildtype.app') || origin.includes('localhost'))) {
+        res.setHeader('Access-Control-Allow-Origin', origin);
+        res.setHeader('Access-Control-Allow-Credentials', 'true');
+        res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+        res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+    }
+
+    if (req.method === 'OPTIONS') {
+        return res.status(200).end();
+    }
+
+    // Protect all admin user routes - must be logged in as admin
+    const sessionUser = await verifyAuth(req);
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return res.status(403).json({ message: 'Forbidden' });
+    }
 
     const client = await clientPromise;
     const db = client.db('Apex_db');
@@ -21,13 +40,14 @@ export default async function handler(req, res) {
     }
 
     if (req.method === 'PUT') {
-        // Update user role/apps
-        const { email, role, apps } = req.body;
+        // Update user role/apps/name
+        const { email, name, role, apps } = req.body;
 
         if (!email) return res.status(400).json({ message: 'Email required' });
 
         try {
             const updateDoc = {};
+            if (name) updateDoc.name = name;
             if (role) updateDoc.role = role;
             if (apps) updateDoc.apps = apps;
 
@@ -56,11 +76,13 @@ export default async function handler(req, res) {
                 return res.status(409).json({ message: 'User already exists' });
             }
 
+            const hashedPassword = await bcrypt.hash(password, 10);
+
             const newUser = {
                 name,
                 email,
                 username: email,
-                password, // TODO: Hash this!
+                password: hashedPassword,
                 role: role || 'user',
                 apps: apps || ['dispo'],
                 createdAt: new Date()
