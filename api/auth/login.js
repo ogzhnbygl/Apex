@@ -23,33 +23,9 @@ export default async function handler(req, res) {
             return res.status(401).json({ message: 'Invalid credentials' });
         }
 
-        let passwordMatch = false;
-        let needsUpgrade = false;
-
-        // Check if the stored password is a bcrypt hash
-        const isBcrypt = user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$');
-
-        if (isBcrypt) {
-            passwordMatch = await bcrypt.compare(password, user.password);
-        } else {
-            // Fallback plain text comparison for legacy users
-            passwordMatch = user.password === password;
-            if (passwordMatch) {
-                needsUpgrade = true;
-            }
-        }
-
+        const passwordMatch = await bcrypt.compare(password, user.password);
         if (!passwordMatch) {
             return res.status(401).json({ message: 'Invalid credentials' });
-        }
-
-        // Upgrade legacy plain text password to bcrypt hash on successful login
-        if (needsUpgrade) {
-            const hashedPassword = await bcrypt.hash(password, 10);
-            await db.collection('users').updateOne(
-                { _id: user._id },
-                { $set: { password: hashedPassword } }
-            );
         }
 
         // Successful login - Create signed JWT token

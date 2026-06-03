@@ -3,11 +3,10 @@ import crypto from 'crypto';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'wildtype-super-secret-key-123';
 
-// Verify JWT or Legacy Base64 token
+// Verify JWT token
 export function verifyToken(token) {
     if (!token) return null;
     
-    // Try JWT first
     try {
         const parts = token.split('.');
         if (parts.length === 3) {
@@ -26,17 +25,6 @@ export function verifyToken(token) {
                 }
                 return payload;
             }
-        }
-    } catch (e) {
-        // Fall through to legacy
-    }
-    
-    // Legacy Base64 check
-    try {
-        const sessionData = Buffer.from(token, 'base64').toString('utf-8');
-        const payload = JSON.parse(sessionData);
-        if (payload && payload.email) {
-            return payload;
         }
     } catch (e) {
         // Ignore
