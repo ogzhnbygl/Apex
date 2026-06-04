@@ -31,16 +31,28 @@ Sistem, yeni modüllerin "Tak-Çıkar" mantığıyla eklenebileceği şekilde ku
 
 ## 🗺️ Yol Haritası (Roadmap)
 
-### Faz 1: Temel Altyapı (Tamamlandı ✅)
-- [x] Merkezi kimlik doğrulama (SSO).
-- [x] Dashboard ve uygulama yönlendirmesi.
-- [x] Temel kullanıcı yönetimi (Admin Paneli).
+### Faz 1: Güvenlik ve Veri Bütünlüğü (Tamamlandı ✅)
+- [x] Bcrypt şifre hashleme ve veritabanı şifre migrasyonu.
+- [x] JWT tabanlı SSO oturum yönetimi (`interapp_session`).
+- [x] Tüm kritik sunucu endpoint'lerinin verifyAuth/verifyUser ile korunması.
+- [x] Silo modülünde atomik bakiye kontrolü (race condition çözümü).
+- [x] Locus modülünde oda/raf kaskat silme mekanizması.
 
-### Faz 2: Entegrasyon ve Genişleme (Devam Ediyor 🚧)
-- [ ] **API Gateway:** İleride tüm modüllerin API'lerinin tek bir gateway üzerinden yönetilmesi.
-- [ ] **Cross-App Veri Paylaşımı:** Modüller arasında veri akışını sağlayacak olay tabanlı (Event-driven) iletişim.
-- [ ] **Audit Genişlemesi:** Sistemdeki tüm hareketlerin (kim, ne zaman, hangi modüle girdi) merkezi olarak loglanması.
+### Faz 2: Mimari Standardizasyon, Doğrulama ve Yönlendirme (Tamamlandı ✅)
+- [x] Tüm modüllerde (Locus, Circa, Dispo, LabProject, Silo) `react-router-dom` ile URL tabanlı yönlendirme.
+- [x] Apex ön yüzünde `RequireAuth` ve `RequireAdmin` koruyucularının gerçek zamanlı sunucu sorgusuna bağlanması.
+- [x] Tüm modüllerin backend API'larında Zod şema doğrulama katmanı.
+- [x] Circa modülünde timezone-safe takvim ve UTC tabanlı mesai çarpan hesaplamaları.
+- [x] Locus modülünde kafes eklemede grid limit sınır ve slot çakışma (overlapping) kontrolleri.
+- [x] Silo modülünde `upsert: true` ile envanter kayıt performans optimizasyonu.
+- [x] SSO JWT oturumuna kullanıcı `name` alanının eklenmesi ve alt uygulamalarda isim gösterimi.
 
-### Faz 3: Kurumsal Özellikler
-- [ ] **SSO Entegrasyonu:** LDAP / Google Auth gibi kurumsal kimlik sağlayıcıları ile entegrasyon.
-- [ ] **Gelişmiş Analitik:** Tüm modüllerden toplanan verilerle organizasyonel içgörüler sunan raporlar.
+> [!NOTE]
+> Faz 2 kapsamındaki Adım 5 özellikleri (Locus Drawer UI, Dispo Bulk API ve Silo Çoklu Ürün Kataloğu) kullanıcı talebi doğrultusunda kapsam dışı tutulmuştur.
+
+### Faz 3: İleri Seviye Özellikler ve Kurumsal Entegrasyonlar (Planlanıyor)
+- [ ] Locus Kafes Detay Drawer UI (Hayvan CRUD yönetimi).
+- [ ] Dispo Toplu Hayvan Girişi (Bulk Import API & UI).
+- [ ] Silo Çoklu Ürün Kataloğu / Ürün bazlı stok takibi.
+- [ ] Kurumsal SSO Entegrasyonları (LDAP, Google Auth vb.).
+- [ ] Gelişmiş merkezi analitik ve audit log genişlemesi.

@@ -4,20 +4,20 @@ Apex, organizasyon içindeki birden fazla web uygulamasına (laboratuvar yöneti
 
 ## 🚀 Özellikler
 
-- **Merkezi Kimlik Doğrulama (SSO Benzeri Yapı):**
+- **Merkezi Kimlik Doğrulama (SSO & JWT):**
     - `wildtype.app` ana domaini üzerinde çalışan güvenli oturum yönetimi.
-    - Alt uygulamalar (örn. `dispo.wildtype.app`, `circa.wildtype.app`) ile paylaşılan HttpOnly cookie tabanlı oturum.
-    - CORS ve domain güvenliği ile korunan yetkilendirme API'sı.
-- **Modüler Uygulama Yönetimi:**
-    - Kullanıcıların yetkilerine göre erişebilecekleri uygulamaları listeleyen Dashboard.
-    - Yeni uygulamaların ve modüllerin kolayca sisteme entegre edilebilmesi.
+    - Alt uygulamalar (örn. `dispo.wildtype.app`, `circa.wildtype.app`) ile paylaşılan `interapp_session` HttpOnly ve secure JWT çerez tabanlı oturum.
+    - Tüm isteklerde geçerli oturumun real-time sunucu kontrolü ile doğrulanması.
+    - CORS ve domain güvenliği ile korunan yetkilendirme API'ları.
 - **Kullanıcı ve Rol Yönetimi:**
-    - **Admin Paneli:** Kullanıcı oluşturma, düzenleme ve silme işlemleri.
+    - **Admin Paneli:** Kullanıcı oluşturma, düzenleme, yetki atama ve silme işlemleri.
     - **Esnek Yetkilendirme:** Kullanıcılara özel uygulama bazlı erişim izinleri (örn. Sadece "Dispo" modülüne erişim).
     - Standart "User" ve tam yetkili "Admin" rolleri.
-- **Modern ve Güvenli Altyapı:**
-    - Güçlü şifreleme ve güvenlik standartlarına uygun mimari.
-    - Vercel üzerinde yüksek performanslı, sunucusuz (serverless) çalışma.
+- **Güvenlik ve Veri Bütünlüğü (Faz 1 & Faz 2):**
+    - **Bcrypt Şifreleme:** Düz metin şifre saklama tamamen kaldırılmış, tüm şifreler Bcrypt hash yapısına dönüştürülmüştür.
+    - **Zod Giriş Doğrulaması:** Tüm API'lara gelen istek verileri Zod şemaları ile doğrulanarak geçersiz ve zararlı payload'lar engellenir.
+    - **Real-time Auth Guards:** Ön yüzdeki `RequireAuth` ve `RequireAdmin` koruyucuları `/api/auth/me` üzerinden canlı oturum doğrulaması yapar.
+    - **Geliştirme Bypass Engellemesi:** Prod ortamında tüm Bearer bypass/arka kapı erişimleri engellenmiştir.
 
 ## 🛠️ Teknolojiler
 
