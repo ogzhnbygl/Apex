@@ -20,14 +20,13 @@ const RequireAuth = ({ children }) => {
                 }
             } catch (err) {
                 console.error(err);
-                const userString = localStorage.getItem('user');
-                setIsAuthenticated(!!userString);
+                setIsAuthenticated(false);
             } finally {
                 setChecking(false);
             }
         };
         verify();
-    }, [location.pathname]);
+    }, []);
 
     if (checking) {
         return (

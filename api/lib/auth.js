@@ -1,7 +1,10 @@
 import clientPromise from './mongodb.js';
 import crypto from 'crypto';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'wildtype-super-secret-key-123';
+if (!process.env.JWT_SECRET) {
+    throw new Error('JWT_SECRET environment variable is missing.');
+}
+const JWT_SECRET = process.env.JWT_SECRET;
 
 // Verify JWT token
 export function verifyToken(token) {
@@ -38,7 +41,7 @@ export async function verifyAuth(req, requiredApp = null) {
     // 1. Bearer Token Bypass (only in development)
     const authHeader = req.headers.authorization;
     if (authHeader && authHeader.startsWith('Bearer ')) {
-        const isDev = process.env.NODE_ENV === 'development' || !process.env.NODE_ENV;
+        const isDev = process.env.NODE_ENV === 'development';
         if (isDev) {
             const email = authHeader.split(' ')[1];
             const client = await clientPromise;

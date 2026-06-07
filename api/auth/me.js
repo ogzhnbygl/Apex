@@ -1,9 +1,20 @@
 import { verifyAuth } from '../lib/auth.js';
 
+function isAllowedOrigin(origin) {
+    if (!origin) return false;
+    try {
+        const parsed = new URL(origin);
+        const hostname = parsed.hostname;
+        return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'wildtype.app' || hostname.endsWith('.wildtype.app');
+    } catch (e) {
+        return false;
+    }
+}
+
 export default async function handler(req, res) {
     // Enable CORS for *.wildtype.app and localhost
     const origin = req.headers.origin;
-    if (origin && (origin.endsWith('.wildtype.app') || origin.includes('localhost'))) {
+    if (isAllowedOrigin(origin)) {
         res.setHeader('Access-Control-Allow-Origin', origin);
         res.setHeader('Access-Control-Allow-Credentials', 'true');
         res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');

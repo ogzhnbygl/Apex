@@ -23,16 +23,14 @@ const RequireAdmin = ({ children }) => {
                 }
             } catch (err) {
                 console.error(err);
-                const userString = localStorage.getItem('user');
-                const user = userString ? JSON.parse(userString) : null;
-                setIsAuthenticated(!!user);
-                setIsAdmin(user ? user.role === 'admin' : false);
+                setIsAuthenticated(false);
+                setIsAdmin(false);
             } finally {
                 setChecking(false);
             }
         };
         verify();
-    }, [location.pathname]);
+    }, []);
 
     if (checking) {
         return (
