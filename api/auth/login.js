@@ -36,12 +36,17 @@ export default async function handler(req, res) {
             name: user.name || user.email.split('@')[0]
         };
 
-        const JWT_SECRET = process.env.JWT_SECRET || 'wildtype-super-secret-key-123';
+        if (!process.env.JWT_SECRET) {
+            throw new Error('JWT_SECRET environment variable is missing.');
+        }
+        const JWT_SECRET = process.env.JWT_SECRET;
         const token = jwt.sign(sessionPayload, JWT_SECRET, { expiresIn: '1d' });
 
-        // Determine domain based on environment (simplified for prototype)
+        // Determine domain dynamically to avoid browser blocking cookies on vercel.app
+        const host = req.headers.host || '';
         const isProd = process.env.NODE_ENV === 'production';
-        const domainAttribute = isProd ? 'Domain=.wildtype.app;' : '';
+        const isWildtypeDomain = host.endsWith('wildtype.app');
+        const domainAttribute = (isProd && isWildtypeDomain) ? 'Domain=.wildtype.app;' : '';
 
         res.setHeader('Set-Cookie', `interapp_session=${token}; Path=/; ${domainAttribute} HttpOnly; SameSite=Lax; Max-Age=86400`);
 
