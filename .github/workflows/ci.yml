@@ -1,0 +1,54 @@
+name: Wildtype CI
+
+on:
+  push:
+    branches: [main, staging]
+  pull_request:
+    branches: [main, staging]
+
+jobs:
+  build-and-verify:
+    name: Build & Ecosystem Checks
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Apex
+        uses: actions/checkout@v4
+        with:
+          path: Apex
+
+      - name: Setup Node.js 22
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: Apex/package-lock.json
+
+      - name: Install Apex Dependencies
+        working-directory: Apex
+        run: npm ci
+
+      - name: Build Apex
+        working-directory: Apex
+        run: npm run build
+
+      - name: Checkout Spoke Modules (when DB secrets are configured)
+        if: ${{ env.HasDbSecrets == 'true' }}
+        env:
+          HasDbSecrets: ${{ secrets.MONGODB_URI != '' && secrets.JWT_SECRET != '' }}
+        run: |
+          for repo in Circa Dispo LabProject Locus Silo; do
+            git clone --depth 1 --branch "${GITHUB_REF_NAME}" "https://github.com/${GITHUB_REPOSITORY_OWNER}/${repo}.git" "${repo}" \
+              || git clone --depth 1 "https://github.com/${GITHUB_REPOSITORY_OWNER}/${repo}.git" "${repo}"
+            (cd "${repo}" && npm ci)
+          done
+
+      - name: Run Ecosystem API & RBAC Tests (*_test_db)
+        if: ${{ env.HasDbSecrets == 'true' }}
+        working-directory: Apex
+        env:
+          HasDbSecrets: ${{ secrets.MONGODB_URI != '' && secrets.JWT_SECRET != '' }}
+          MONGODB_URI: ${{ secrets.MONGODB_URI }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          VERCEL_ENV: preview
+        run: npm run test:api

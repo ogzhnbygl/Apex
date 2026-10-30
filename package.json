@@ -8,6 +8,10 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
+    "test": "node scripts/run-ci-checks.js --with-e2e",
+    "test:api": "node --test tests/api/ecosystem.test.js",
+    "test:e2e": "playwright test",
+    "test:ci": "node scripts/run-ci-checks.js",
     "sync:test-db": "node scripts/sync-test-db.js",
     "deploy:preview": "node scripts/deploy-preview.js",
     "deploy:prod": "node scripts/deploy-prod.js"
@@ -26,6 +30,7 @@
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",
+    "@playwright/test": "^1.64.1",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
     "@vitejs/plugin-react": "^4.3.1",

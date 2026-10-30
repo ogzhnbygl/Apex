@@ -4,6 +4,7 @@ import { fileURLToPath } from 'url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
+const APEX_DIR = path.resolve(__dirname, '..');
 const ROOT_DIR = path.resolve(__dirname, '../..');
 
 const MODULES = [
@@ -15,14 +16,27 @@ const MODULES = [
     { name: 'Silo', domain: 'silo.wildtype.app' },
 ];
 
-const filterArg = process.argv[2]?.toLowerCase();
+const rawArgs = process.argv.slice(2);
+const skipTests = rawArgs.includes('--skip-tests');
+const filterArg = rawArgs.find((a) => !a.startsWith('--'))?.toLowerCase();
+
 const selected = filterArg
     ? MODULES.filter((m) => m.name.toLowerCase() === filterArg)
     : MODULES;
 
 if (selected.length === 0) {
-    console.error(`Bilinmeyen modül: ${process.argv[2]}`);
+    console.error(`Bilinmeyen modül: ${filterArg}`);
     process.exit(1);
+}
+
+if (!skipTests) {
+    const checkArgs = ['scripts/run-ci-checks.js', '--with-e2e'];
+    if (filterArg) checkArgs.push(filterArg);
+    const gateRes = spawnSync('node', checkArgs, { cwd: APEX_DIR, stdio: 'inherit' });
+    if (gateRes.status !== 0) {
+        console.error('🛑 Otomatik test kapısı (Build + API + Playwright E2E) geçilemedi! Canlı deploy iptal edildi.');
+        process.exit(1);
+    }
 }
 
 for (const mod of selected) {
