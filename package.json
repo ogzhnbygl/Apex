@@ -8,7 +8,9 @@
     "build": "vite build",
     "lint": "eslint .",
     "preview": "vite preview",
-    "sync:test-db": "node scripts/sync-test-db.js"
+    "sync:test-db": "node scripts/sync-test-db.js",
+    "deploy:preview": "node scripts/deploy-preview.js",
+    "deploy:prod": "node scripts/deploy-prod.js"
   },
   "dependencies": {
     "bcryptjs": "^3.0.3",
