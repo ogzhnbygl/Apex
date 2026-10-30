@@ -2,6 +2,12 @@ import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { LogOut, Shield, LayoutGrid } from 'lucide-react';
 
+const isPreviewHost = typeof window !== 'undefined' && (
+    window.location.hostname === 'test.wildtype.app' ||
+    window.location.hostname.startsWith('test-') ||
+    window.location.hostname.endsWith('.vercel.app')
+);
+
 const Layout = () => {
     const navigate = useNavigate();
     // Actual logout logic
@@ -26,6 +32,11 @@ const Layout = () => {
                                     <span className="text-white">A</span>
                                 </div>
                                 Apex
+                                {isPreviewHost && (
+                                    <span className="ml-1 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider bg-amber-100 text-amber-800 border border-amber-300 rounded-full">
+                                        Test Ortamı
+                                    </span>
+                                )}
                             </Link>
                             <div className="hidden md:flex items-center gap-4">
                                 <Link to="/" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-2">

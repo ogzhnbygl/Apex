@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import clientPromise from '../lib/mongodb.js';
+import clientPromise, { getDbName } from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -14,7 +14,7 @@ export default async function handler(req, res) {
 
     try {
         const client = await clientPromise;
-        const db = client.db('Apex_db');
+        const db = client.db(getDbName('Apex_db'));
 
         const existingUser = await db.collection('users').findOne({ email });
 

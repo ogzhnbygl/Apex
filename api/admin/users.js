@@ -1,5 +1,5 @@
 import bcrypt from 'bcryptjs';
-import clientPromise from '../lib/mongodb.js';
+import clientPromise, { getDbName } from '../lib/mongodb.js';
 import { verifyAuth } from '../lib/auth.js';
 
 function isAllowedOrigin(origin) {
@@ -34,7 +34,7 @@ export default async function handler(req, res) {
     }
 
     const client = await clientPromise;
-    const db = client.db('Apex_db');
+    const db = client.db(getDbName('Apex_db'));
 
     if (req.method === 'GET') {
         try {

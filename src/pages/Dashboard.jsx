@@ -11,12 +11,21 @@ const Dashboard = () => {
         }
     }, []);
 
+    const isTestEnv = typeof window !== 'undefined' && (
+        window.location.hostname === 'test.wildtype.app' ||
+        window.location.hostname.startsWith('test-') ||
+        window.location.hostname.endsWith('.vercel.app')
+    );
+
+    const getAppUrl = (subdomain) =>
+        isTestEnv ? `https://test-${subdomain}.wildtype.app` : `https://${subdomain}.wildtype.app`;
+
     const allApps = [
         {
             id: 'dispo',
             name: 'Dispo',
             description: 'Disposition Management System',
-            url: 'https://dispo.wildtype.app',
+            url: getAppUrl('dispo'),
             icon: Box,
             color: 'from-emerald-500 to-teal-600'
         },
@@ -24,7 +33,7 @@ const Dashboard = () => {
             id: 'labproject',
             name: 'LabProject',
             description: 'Research Project & Ethics Management',
-            url: 'https://labproject.wildtype.app',
+            url: getAppUrl('labproject'),
             icon: FlaskConical,
             color: 'from-blue-500 to-indigo-600'
         },
@@ -32,7 +41,7 @@ const Dashboard = () => {
             id: 'silo',
             name: 'Silo',
             description: 'Yem Stok Yönetimi',
-            url: 'https://silo.wildtype.app',
+            url: getAppUrl('silo'),
             icon: Package,
             color: 'from-orange-500 to-red-600'
         },
@@ -40,7 +49,7 @@ const Dashboard = () => {
             id: 'circa',
             name: 'Circa',
             description: 'Mesai Takip Sistemi',
-            url: 'https://circa.wildtype.app',
+            url: getAppUrl('circa'),
             icon: Clock,
             color: 'from-purple-500 to-pink-600'
         },
@@ -48,7 +57,7 @@ const Dashboard = () => {
             id: 'locus',
             name: 'Locus',
             description: 'Vivaryum Dijital İkiz Sistemi',
-            url: 'https://locus.wildtype.app',
+            url: getAppUrl('locus'),
             icon: MapPin,
             color: 'from-fuchsia-500 to-violet-600'
         }

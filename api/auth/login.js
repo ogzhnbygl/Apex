@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import clientPromise from '../lib/mongodb.js';
+import clientPromise, { getDbName, getSessionCookieName } from '../lib/mongodb.js';
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
@@ -15,7 +15,7 @@ export default async function handler(req, res) {
 
     try {
         const client = await clientPromise;
-        const db = client.db('Apex_db');
+        const db = client.db(getDbName('Apex_db'));
 
         const user = await db.collection('users').findOne({ email });
 
@@ -43,12 +43,13 @@ export default async function handler(req, res) {
         const token = jwt.sign(sessionPayload, JWT_SECRET, { expiresIn: '1d' });
 
         // Determine domain dynamically to avoid browser blocking cookies on vercel.app
-        const host = req.headers.host || '';
-        const isProd = process.env.NODE_ENV === 'production';
-        const isWildtypeDomain = host.endsWith('wildtype.app');
-        const domainAttribute = (isProd && isWildtypeDomain) ? 'Domain=.wildtype.app;' : '';
+        const host = (req.headers.host || '').split(':')[0];
+        const cookieName = getSessionCookieName();
+        const isWildtypeDomain = host === 'wildtype.app' || host.endsWith('.wildtype.app');
+        const domainAttribute = isWildtypeDomain ? 'Domain=.wildtype.app;' : '';
+        const secureAttribute = (process.env.NODE_ENV === 'production' || isWildtypeDomain) ? 'Secure;' : '';
 
-        res.setHeader('Set-Cookie', `interapp_session=${token}; Path=/; ${domainAttribute} HttpOnly; SameSite=Lax; Max-Age=86400`);
+        res.setHeader('Set-Cookie', `${cookieName}=${token}; Path=/; ${domainAttribute} ${secureAttribute} HttpOnly; SameSite=Lax; Max-Age=86400`);
 
         return res.status(200).json({
             message: 'Login successful',

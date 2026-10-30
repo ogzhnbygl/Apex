@@ -1,4 +1,4 @@
-import clientPromise from './mongodb.js';
+import clientPromise, { getDbName, getSessionCookieName } from './mongodb.js';
 import crypto from 'crypto';
 
 if (!process.env.JWT_SECRET) {
@@ -45,7 +45,7 @@ export async function verifyAuth(req, requiredApp = null) {
         if (isDev) {
             const email = authHeader.split(' ')[1];
             const client = await clientPromise;
-            const db = client.db('Apex_db');
+            const db = client.db(getDbName('Apex_db'));
             const user = await db.collection('users').findOne({ email });
             if (user) {
                 return { email: user.email, role: user.role, apps: user.apps, name: user.name || user.email.split('@')[0] };
@@ -54,13 +54,17 @@ export async function verifyAuth(req, requiredApp = null) {
     }
 
     // 2. Cookie Authentication
-    const cookies = req.headers.cookie || '';
-    const match = cookies.match(/interapp_session=([^;]+)/);
-    if (!match || !match[1]) {
+    const cookieHeader = req.headers.cookie || '';
+    const cookieName = getSessionCookieName();
+    const tokenCookie = cookieHeader
+        .split(';')
+        .map(c => c.trim())
+        .find(c => c.startsWith(`${cookieName}=`));
+    if (!tokenCookie) {
         return null;
     }
     
-    const token = match[1];
+    const token = tokenCookie.slice(cookieName.length + 1);
     const decoded = verifyToken(token);
     if (!decoded || !decoded.email) {
         return null;
@@ -68,7 +72,7 @@ export async function verifyAuth(req, requiredApp = null) {
     
     // Query database for up-to-date role and apps
     const client = await clientPromise;
-    const db = client.db('Apex_db');
+    const db = client.db(getDbName('Apex_db'));
     const user = await db.collection('users').findOne({ email: decoded.email });
     if (!user) {
         return null;

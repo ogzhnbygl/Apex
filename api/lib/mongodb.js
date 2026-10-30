@@ -26,4 +26,19 @@ if (!process.env.MONGODB_URI) {
     }
 }
 
+export function isProdEnv() {
+    return process.env.VERCEL_ENV === 'production' || process.env.FORCE_PROD_DB === 'true';
+}
+
+export function getDbName(baseName) {
+    if (isProdEnv()) return baseName;
+    return baseName.endsWith('_db')
+        ? baseName.replace(/_db$/, '_test_db')
+        : `${baseName}_test`;
+}
+
+export function getSessionCookieName() {
+    return isProdEnv() ? 'interapp_session' : 'interapp_session_test';
+}
+
 export default clientPromise;
