@@ -1,10 +1,14 @@
-import React, { useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+
+const AuthUserContext = createContext(null);
+
+export const useAuthUser = () => useContext(AuthUserContext);
 
 const RequireAuth = ({ children }) => {
     const location = useLocation();
     const [checking, setChecking] = useState(true);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [user, setUser] = useState(null);
 
     useEffect(() => {
         const verify = async () => {
@@ -13,14 +17,14 @@ const RequireAuth = ({ children }) => {
                 if (res.ok) {
                     const data = await res.json();
                     localStorage.setItem('user', JSON.stringify(data));
-                    setIsAuthenticated(true);
+                    setUser(data);
                 } else {
                     localStorage.removeItem('user');
-                    setIsAuthenticated(false);
+                    setUser(null);
                 }
             } catch (err) {
                 console.error(err);
-                setIsAuthenticated(false);
+                setUser(null);
             } finally {
                 setChecking(false);
             }
@@ -36,11 +40,15 @@ const RequireAuth = ({ children }) => {
         );
     }
 
-    if (!isAuthenticated) {
+    if (!user) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    return children;
+    return (
+        <AuthUserContext.Provider value={user}>
+            {children}
+        </AuthUserContext.Provider>
+    );
 };
 
 export default RequireAuth;

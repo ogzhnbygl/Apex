@@ -1,6 +1,7 @@
 import React from 'react';
 import { Link, Outlet, useNavigate } from 'react-router-dom';
 import { LogOut, Shield, LayoutGrid } from 'lucide-react';
+import { useAuthUser } from './RequireAuth';
 
 const isPreviewHost = typeof window !== 'undefined' && (
     window.location.hostname === 'test.wildtype.app' ||
@@ -10,6 +11,8 @@ const isPreviewHost = typeof window !== 'undefined' && (
 
 const Layout = () => {
     const navigate = useNavigate();
+    const user = useAuthUser();
+
     // Actual logout logic
     const handleLogout = async () => {
         try {
@@ -38,15 +41,17 @@ const Layout = () => {
                                     </span>
                                 )}
                             </Link>
-                            <div className="hidden md:flex items-center gap-4">
+                            <div className="flex items-center gap-4">
                                 <Link to="/" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-2">
                                     <LayoutGrid size={16} />
                                     Dashboard
                                 </Link>
-                                <Link to="/admin" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-2">
-                                    <Shield size={16} />
-                                    Yönetici
-                                </Link>
+                                {user?.role === 'admin' && (
+                                    <Link to="/admin" className="text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors flex items-center gap-2">
+                                        <Shield size={16} />
+                                        Yönetici
+                                    </Link>
+                                )}
                             </div>
                         </div>
                         <button

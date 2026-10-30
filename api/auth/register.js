@@ -1,16 +1,33 @@
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import clientPromise, { getDbName } from '../lib/mongodb.js';
+import { verifyAuth } from '../lib/auth.js';
+
+const registerSchema = z.object({
+    name: z.string().trim().min(1, 'Ad Soyad gereklidir.').optional(),
+    email: z.string().trim().email('Geçerli bir e-posta adresi gereklidir.'),
+    password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır.')
+});
 
 export default async function handler(req, res) {
     if (req.method !== 'POST') {
         return res.status(405).json({ message: 'Method not allowed' });
     }
 
-    const { email, password } = req.body;
-
-    if (!email || !password) {
-        return res.status(400).json({ message: 'Email and password are required' });
+    // Restrict user registration exclusively to authenticated system administrators
+    const sessionUser = await verifyAuth(req);
+    if (!sessionUser || sessionUser.role !== 'admin') {
+        return res.status(403).json({ message: 'Kayıt işlemi sadece sistem yöneticisi tarafından yapılabilir.' });
     }
+
+    const validation = registerSchema.safeParse(req.body);
+    if (!validation.success) {
+        return res.status(400).json({
+            message: validation.error.issues?.[0]?.message || 'Geçersiz kayıt verisi.'
+        });
+    }
+
+    const { name, email, password } = validation.data;
 
     try {
         const client = await clientPromise;
@@ -19,16 +36,18 @@ export default async function handler(req, res) {
         const existingUser = await db.collection('users').findOne({ email });
 
         if (existingUser) {
-            return res.status(409).json({ message: 'User already exists' });
+            return res.status(409).json({ message: 'Bu e-posta adresi ile kayıtlı bir kullanıcı zaten mevcut.' });
         }
 
         const hashedPassword = await bcrypt.hash(password, 10);
 
         const newUser = {
+            name: name || email.split('@')[0],
             email,
+            username: email,
             password: hashedPassword,
-            role: 'user', // Default role
-            apps: [], // Default apps access
+            role: 'user',
+            apps: [],
             createdAt: new Date()
         };
 

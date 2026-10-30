@@ -1,36 +1,40 @@
 import React, { useState, useEffect } from 'react';
 import { Navigate, useLocation } from 'react-router-dom';
+import { useAuthUser } from './RequireAuth';
 
 const RequireAdmin = ({ children }) => {
     const location = useLocation();
-    const [checking, setChecking] = useState(true);
-    const [isAdmin, setIsAdmin] = useState(false);
-    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const contextUser = useAuthUser();
+    const [checking, setChecking] = useState(!contextUser);
+    const [verifiedUser, setVerifiedUser] = useState(contextUser);
 
     useEffect(() => {
+        if (contextUser) {
+            setVerifiedUser(contextUser);
+            setChecking(false);
+            return;
+        }
+
         const verify = async () => {
             try {
                 const res = await fetch('/api/auth/me');
                 if (res.ok) {
                     const data = await res.json();
                     localStorage.setItem('user', JSON.stringify(data));
-                    setIsAuthenticated(true);
-                    setIsAdmin(data.role === 'admin');
+                    setVerifiedUser(data);
                 } else {
                     localStorage.removeItem('user');
-                    setIsAuthenticated(false);
-                    setIsAdmin(false);
+                    setVerifiedUser(null);
                 }
             } catch (err) {
                 console.error(err);
-                setIsAuthenticated(false);
-                setIsAdmin(false);
+                setVerifiedUser(null);
             } finally {
                 setChecking(false);
             }
         };
         verify();
-    }, []);
+    }, [contextUser]);
 
     if (checking) {
         return (
@@ -40,11 +44,11 @@ const RequireAdmin = ({ children }) => {
         );
     }
 
-    if (!isAuthenticated) {
+    if (!verifiedUser) {
         return <Navigate to="/login" state={{ from: location }} replace />;
     }
 
-    if (!isAdmin) {
+    if (verifiedUser.role !== 'admin') {
         return <Navigate to="/" replace />;
     }
 

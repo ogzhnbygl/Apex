@@ -1,6 +1,27 @@
 import bcrypt from 'bcryptjs';
+import { z } from 'zod';
 import clientPromise, { getDbName } from '../lib/mongodb.js';
 import { verifyAuth } from '../lib/auth.js';
+
+const ALLOWED_APPS = ['dispo', 'labproject', 'silo', 'circa', 'locus', 'apex'];
+
+const userPostSchema = z.object({
+    name: z.string().trim().min(1, 'Ad Soyad gereklidir.'),
+    email: z.string().trim().email('Geçerli bir e-posta adresi gereklidir.'),
+    password: z.string().min(6, 'Şifre en az 6 karakter olmalıdır.'),
+    role: z.enum(['user', 'admin']).optional().default('user'),
+    apps: z.array(z.string().trim().toLowerCase().refine(a => ALLOWED_APPS.includes(a), 'Geçersiz uygulama yetkisi.')).optional().default(['dispo'])
+});
+
+const userPutSchema = z.object({
+    email: z.string().trim().email('Geçerli bir e-posta adresi gereklidir.'),
+    name: z.string().trim().min(1, 'Ad Soyad boş bırakılamaz.').optional(),
+    password: z.string().optional(),
+    role: z.enum(['user', 'admin']).optional(),
+    apps: z.array(z.string().trim().toLowerCase().refine(a => ALLOWED_APPS.includes(a), 'Geçersiz uygulama yetkisi.')).optional()
+});
+
+const emailSchema = z.string().trim().email('Geçerli bir e-posta adresi gereklidir.');
 
 function isAllowedOrigin(origin) {
     if (!origin) return false;
@@ -8,7 +29,7 @@ function isAllowedOrigin(origin) {
         const parsed = new URL(origin);
         const hostname = parsed.hostname;
         return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'wildtype.app' || hostname.endsWith('.wildtype.app');
-    } catch (e) {
+    } catch {
         return false;
     }
 }
@@ -30,7 +51,7 @@ export default async function handler(req, res) {
     // Protect all admin user routes - must be logged in as admin
     const sessionUser = await verifyAuth(req);
     if (!sessionUser || sessionUser.role !== 'admin') {
-        return res.status(403).json({ message: 'Forbidden' });
+        return res.status(403).json({ message: 'Bu işlem için yönetici yetkisi gereklidir.' });
     }
 
     const client = await clientPromise;
@@ -46,45 +67,67 @@ export default async function handler(req, res) {
             });
             return res.status(200).json(safeUsers);
         } catch (error) {
-            return res.status(500).json({ message: 'Error fetching users' });
+            return res.status(500).json({ message: 'Kullanıcı listesi alınamadı.' });
         }
     }
 
     if (req.method === 'PUT') {
-        // Update user role/apps/name
-        const { email, name, role, apps } = req.body;
+        const validation = userPutSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({
+                message: validation.error.issues?.[0]?.message || 'Geçersiz kullanıcı verisi.'
+            });
+        }
 
-        if (!email) return res.status(400).json({ message: 'Email required' });
+        const { email, name, password, role, apps } = validation.data;
+
+        if (email.toLowerCase() === sessionUser.email.toLowerCase() && role && role !== 'admin') {
+            return res.status(400).json({ message: 'Güvenlik gereği kendi yönetici (Admin) rolünüzü düşüremezsiniz.' });
+        }
 
         try {
-            const updateDoc = {};
-            if (name) updateDoc.name = name;
-            if (role) updateDoc.role = role;
-            if (apps) updateDoc.apps = apps;
+            const updateDoc = { updatedAt: new Date() };
+            if (name !== undefined) updateDoc.name = name;
+            if (role !== undefined) updateDoc.role = role;
+            if (apps !== undefined) updateDoc.apps = apps;
 
-            await db.collection('users').updateOne(
+            if (password && password.trim().length > 0) {
+                if (password.length < 6) {
+                    return res.status(400).json({ message: 'Yeni şifre en az 6 karakter olmalıdır.' });
+                }
+                updateDoc.password = await bcrypt.hash(password, 10);
+            }
+
+            const result = await db.collection('users').updateOne(
                 { email },
                 { $set: updateDoc }
             );
 
-            return res.status(200).json({ message: 'User updated' });
+            if (result.matchedCount === 0) {
+                return res.status(404).json({ message: 'Kullanıcı bulunamadı.' });
+            }
+
+            return res.status(200).json({ message: 'Kullanıcı güncellendi.' });
         } catch (error) {
-            return res.status(500).json({ message: 'Error updating user' });
+            console.error('Error updating user:', error);
+            return res.status(500).json({ message: 'Kullanıcı güncellenirken hata oluştu.' });
         }
     }
 
     if (req.method === 'POST') {
-        // Create new user
-        const { name, email, password, role, apps } = req.body;
-
-        if (!email || !password) {
-            return res.status(400).json({ message: 'Email and password are required' });
+        const validation = userPostSchema.safeParse(req.body);
+        if (!validation.success) {
+            return res.status(400).json({
+                message: validation.error.issues?.[0]?.message || 'Geçersiz kullanıcı verisi.'
+            });
         }
+
+        const { name, email, password, role, apps } = validation.data;
 
         try {
             const existingUser = await db.collection('users').findOne({ email });
             if (existingUser) {
-                return res.status(409).json({ message: 'User already exists' });
+                return res.status(409).json({ message: 'Bu e-posta adresiyle kayıtlı kullanıcı zaten mevcut.' });
             }
 
             const hashedPassword = await bcrypt.hash(password, 10);
@@ -94,35 +137,41 @@ export default async function handler(req, res) {
                 email,
                 username: email,
                 password: hashedPassword,
-                role: role || 'user',
-                apps: apps || ['dispo'],
+                role,
+                apps,
                 createdAt: new Date()
             };
 
             await db.collection('users').insertOne(newUser);
-            return res.status(201).json({ message: 'User created successfully' });
+            return res.status(201).json({ message: 'Kullanıcı başarıyla oluşturuldu.' });
         } catch (error) {
             console.error('Error creating user:', error);
-            return res.status(500).json({ message: `Error creating user: ${error.message}` });
+            return res.status(500).json({ message: 'Kullanıcı oluşturulurken hata oluştu.' });
         }
     }
 
     if (req.method === 'DELETE') {
-        // Delete user
-        const { email } = req.query;
+        const emailValidation = emailSchema.safeParse(req.query?.email);
+        if (!emailValidation.success) {
+            return res.status(400).json({
+                message: emailValidation.error.issues?.[0]?.message || 'Geçerli e-posta gereklidir.'
+            });
+        }
 
-        if (!email) {
-            return res.status(400).json({ message: 'Email required' });
+        const email = emailValidation.data;
+
+        if (email.toLowerCase() === sessionUser.email.toLowerCase()) {
+            return res.status(400).json({ message: 'Kendi yönetici hesabınızı silemezsiniz.' });
         }
 
         try {
             const result = await db.collection('users').deleteOne({ email });
             if (result.deletedCount === 0) {
-                return res.status(404).json({ message: 'User not found' });
+                return res.status(404).json({ message: 'Kullanıcı bulunamadı.' });
             }
-            return res.status(200).json({ message: 'User deleted' });
+            return res.status(200).json({ message: 'Kullanıcı silindi.' });
         } catch (error) {
-            return res.status(500).json({ message: 'Error deleting user' });
+            return res.status(500).json({ message: 'Kullanıcı silinirken hata oluştu.' });
         }
     }
 
