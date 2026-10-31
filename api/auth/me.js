@@ -6,7 +6,7 @@ function isAllowedOrigin(origin) {
         const parsed = new URL(origin);
         const hostname = parsed.hostname;
         return hostname === 'localhost' || hostname === '127.0.0.1' || hostname === 'wildtype.app' || hostname.endsWith('.wildtype.app');
-    } catch (e) {
+    } catch {
         return false;
     }
 }

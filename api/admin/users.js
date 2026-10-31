@@ -62,11 +62,11 @@ export default async function handler(req, res) {
             const users = await db.collection('users').find({}).toArray();
             // Remove passwords from result
             const safeUsers = users.map(u => {
-                const { password, ...rest } = u;
+                const { password: _password, ...rest } = u;
                 return rest;
             });
             return res.status(200).json(safeUsers);
-        } catch (error) {
+        } catch (_error) {
             return res.status(500).json({ message: 'Kullanıcı listesi alınamadı.' });
         }
     }
@@ -170,7 +170,7 @@ export default async function handler(req, res) {
                 return res.status(404).json({ message: 'Kullanıcı bulunamadı.' });
             }
             return res.status(200).json({ message: 'Kullanıcı silindi.' });
-        } catch (error) {
+        } catch (_error) {
             return res.status(500).json({ message: 'Kullanıcı silinirken hata oluştu.' });
         }
     }

@@ -3,6 +3,7 @@ import { Navigate, useLocation } from 'react-router-dom';
 
 const AuthUserContext = createContext(null);
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuthUser = () => useContext(AuthUserContext);
 
 const RequireAuth = ({ children }) => {
