@@ -64,7 +64,7 @@ const Dashboard = () => {
         {
             id: 'pulsus',
             name: 'Pulsus',
-            description: 'Ritus & Sequa tabanlı laboratuvar rutin görev, denetim ve iş akışı (Kanban) yönetim merkezi.',
+            description: 'İş Akışı Yönetim Merkezi',
             url: getAppUrl('pulsus'),
             icon: Activity,
             color: 'from-rose-500 to-indigo-600'
