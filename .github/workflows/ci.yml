@@ -40,7 +40,7 @@ jobs:
       - name: Checkout Spoke Modules (when DB secrets are configured)
         if: ${{ env.MONGODB_URI != '' && env.JWT_SECRET != '' }}
         run: |
-          for repo in Circa Dispo LabProject Locus Silo; do
+          for repo in Circa Dispo LabProject Locus Pulsus Silo; do
             git clone --depth 1 --branch "${GITHUB_REF_NAME}" "https://github.com/${GITHUB_REPOSITORY_OWNER}/${repo}.git" "${repo}" \
               || git clone --depth 1 "https://github.com/${GITHUB_REPOSITORY_OWNER}/${repo}.git" "${repo}"
             (cd "${repo}" && npm ci)
