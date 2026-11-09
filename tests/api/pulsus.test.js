@@ -559,7 +559,27 @@ describe('SUITE-3: Ritus Zamanlama, Cuma 16:30 Dağıtımı, Hafta Ortası Ay Ge
         assert.equal(isFridayDistributionTimeReached(fridayBefore1630), false);
         assert.equal(isFridayDistributionTimeReached(fridayAfter1630), true);
 
+        let tempTplId = null;
+
         try {
+            // Ensure at least one active weekly template exists for T3.1 even if Pulsus_test_db templates were cleared
+            const tplIns = await db.collection('ritus_templates').insertOne({
+                title: 'CI Cuma 16:30 Dağıtım Test Şablonu',
+                category: 'cleaning',
+                frequency: 'weekly',
+                daysOfWeek: [1, 4],
+                scheduledTime: '09:00',
+                primaryAssignee: CARE_GOKHAN,
+                backupAssignee: CARE_YUSUF,
+                primaryReviewer: TECH_KUBRA,
+                backupReviewer: TECH_GAMZE,
+                checklist: ['Adım 1'],
+                isActive: true,
+                createdAt: new Date(),
+                updatedAt: new Date()
+            });
+            tempTplId = tplIns.insertedId;
+
             // 1. Calling POST /api/ritus/runs at Friday 16:00 without explicit scope distributes current week (baseWeekMonday), NOT nextWeekMonday
             const beforeRes = mockRes();
             await runsHandler(
@@ -616,6 +636,9 @@ describe('SUITE-3: Ritus Zamanlama, Cuma 16:30 Dağıtımı, Hafta Ortası Ay Ge
             assert.equal(afterRes2.body.createdCount, 0, 'Idempotent distribution must not duplicate cards');
             assert.equal(afterRes2.body.existingCount, afterRes1.body.createdCount);
         } finally {
+            if (tempTplId) {
+                await db.collection('ritus_templates').deleteOne({ _id: tempTplId });
+            }
             await db
                 .collection('ritus_runs')
                 .deleteMany({ weekStart: { $in: [baseWeekMonday, nextWeekMonday] } });
