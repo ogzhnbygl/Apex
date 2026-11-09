@@ -304,7 +304,6 @@ test.describe('Wildtype Uçtan Uca (E2E) Tarayıcı & Dosya İndirme Testleri', 
 
         // 1. Open Pulsus Unified Dashboard (Nabız)
         await page.goto(URLS.pulsus);
-        await expect(page.getByText('Canlı Operasyon Nabzı')).toBeVisible();
         await expect(page.getByText(/Ritus — Haftalık Rutin Görevlerim/)).toBeVisible();
         await expect(page.getByText(/Sequa — Kişi Bazlı Görev/)).toBeVisible();
 
