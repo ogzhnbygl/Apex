@@ -13,6 +13,7 @@ const MODULES = [
     { name: 'Dispo', alias: 'test-dispo.wildtype.app' },
     { name: 'LabProject', alias: 'test-labproject.wildtype.app' },
     { name: 'Locus', alias: 'test-locus.wildtype.app' },
+    { name: 'Pulsus', alias: 'test-pulsus.wildtype.app' },
     { name: 'Silo', alias: 'test-silo.wildtype.app' },
 ];
 

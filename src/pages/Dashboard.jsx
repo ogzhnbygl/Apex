@@ -1,5 +1,5 @@
 import React from 'react';
-import { ExternalLink, Box, FlaskConical, Package, Clock, MapPin } from 'lucide-react';
+import { ExternalLink, Box, FlaskConical, Package, Clock, MapPin, Activity } from 'lucide-react';
 
 const Dashboard = () => {
     const [user, setUser] = React.useState(null);
@@ -60,6 +60,14 @@ const Dashboard = () => {
             url: getAppUrl('locus'),
             icon: MapPin,
             color: 'from-fuchsia-500 to-violet-600'
+        },
+        {
+            id: 'pulsus',
+            name: 'Pulsus',
+            description: 'Ritus & Sequa tabanlı laboratuvar rutin görev, denetim ve iş akışı (Kanban) yönetim merkezi.',
+            url: getAppUrl('pulsus'),
+            icon: Activity,
+            color: 'from-rose-500 to-indigo-600'
         }
     ];
 

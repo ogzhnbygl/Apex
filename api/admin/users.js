@@ -3,7 +3,7 @@ import { z } from 'zod';
 import clientPromise, { getDbName } from '../lib/mongodb.js';
 import { verifyAuth } from '../lib/auth.js';
 
-const ALLOWED_APPS = ['dispo', 'labproject', 'silo', 'circa', 'locus', 'apex'];
+const ALLOWED_APPS = ['dispo', 'labproject', 'silo', 'circa', 'locus', 'pulsus', 'apex'];
 
 const userPostSchema = z.object({
     name: z.string().trim().min(1, 'Ad Soyad gereklidir.'),

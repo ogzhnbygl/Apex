@@ -13,6 +13,7 @@ const MODULES = [
     { name: 'Dispo', domain: 'dispo.wildtype.app' },
     { name: 'LabProject', domain: 'labproject.wildtype.app' },
     { name: 'Locus', domain: 'locus.wildtype.app' },
+    { name: 'Pulsus', domain: 'pulsus.wildtype.app' },
     { name: 'Silo', domain: 'silo.wildtype.app' },
 ];
 

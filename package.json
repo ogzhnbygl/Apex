@@ -9,7 +9,7 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "node scripts/run-ci-checks.js --with-e2e",
-    "test:api": "node --test tests/api/ecosystem.test.js",
+    "test:api": "node --test tests/api/ecosystem.test.js tests/api/pulsus.test.js",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
     "test:e2e:headed": "playwright test --headed",

@@ -7,7 +7,7 @@ const __dirname = path.dirname(__filename);
 const APEX_DIR = path.resolve(__dirname, '..');
 const ROOT_DIR = path.resolve(APEX_DIR, '..');
 
-const ALL_MODULES = ['Apex', 'Circa', 'Dispo', 'LabProject', 'Locus', 'Silo'];
+const ALL_MODULES = ['Apex', 'Circa', 'Dispo', 'LabProject', 'Locus', 'Pulsus', 'Silo'];
 
 const args = process.argv.slice(2);
 const withE2E = args.includes('--with-e2e');
@@ -39,7 +39,7 @@ for (const mod of targetModules) {
 }
 
 console.log('\n🧪 [2/3] Merkezi API, Güvenlik & Yetki Testleri Çalıştırılıyor (*_test_db)...');
-const apiRes = spawnSync('node', ['--test', 'tests/api/ecosystem.test.js'], {
+const apiRes = spawnSync('node', ['--test', 'tests/api/ecosystem.test.js', 'tests/api/pulsus.test.js'], {
     cwd: APEX_DIR,
     stdio: 'inherit'
 });

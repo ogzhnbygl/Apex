@@ -29,7 +29,8 @@ const URLS = {
     circa: 'http://localhost:4172',
     dispo: 'http://localhost:4173',
     labproject: 'http://localhost:4174',
-    silo: 'http://localhost:4175'
+    silo: 'http://localhost:4175',
+    pulsus: 'http://localhost:4176'
 };
 
 function makeSessionCookie(email, role = 'admin') {
@@ -296,5 +297,34 @@ test.describe('Wildtype Uçtan Uca (E2E) Tarayıcı & Dosya İndirme Testleri', 
         const download = await downloadPromise;
 
         expect(download.suggestedFilename()).toMatch(/^silo-yem-tuketim-raporu-.*\.pdf$/);
+    });
+
+    test('6. Pulsus: Nabız birleşik pano, Ritus şablon planlayıcı, Sequa panosu ve CSV/JSON rapor indirme', async ({ context, page }) => {
+        await context.addCookies([makeSessionCookie('oguzhan.baygul@medeniyet.edu.tr', 'admin')]);
+
+        // 1. Open Pulsus Unified Dashboard (Nabız)
+        await page.goto(URLS.pulsus);
+        await expect(page.getByText('Canlı Operasyon Nabzı')).toBeVisible();
+        await expect(page.getByText(/Ritus — Haftalık Rutin Görevlerim/)).toBeVisible();
+        await expect(page.getByText(/Sequa — Kişi Bazlı Görev/)).toBeVisible();
+
+        // 2. Navigate to Ritus Board & open Template Planner
+        await page.locator('nav').getByRole('link', { name: /Ritus/ }).click();
+        await expect(page.getByText('Periyodik Laboratuvar Rutinleri ve Denetim Akışı')).toBeVisible();
+        await page.getByRole('button', { name: /Rutin Şablon Planlayıcı/ }).click();
+        await expect(page.getByRole('button', { name: 'Yeni Rutin Şablonu' })).toBeVisible();
+
+        // 3. Navigate to Sequa Board
+        await page.locator('nav').getByRole('link', { name: /Sequa/ }).click();
+        await expect(page.getByText('Rutin Olmayan İşler, Hekim Muayene Talepleri ve Arıza Yönetimi')).toBeVisible();
+
+        // 4. Navigate to Reports & Team and verify CSV download
+        await page.locator('nav').getByRole('link', { name: /Raporlar & Ekip/ }).click();
+        await expect(page.getByText('Laboratuvar Ekibi, Canlı Circa İzin Durumu ve Performans Matrisi')).toBeVisible();
+
+        const csvDownloadPromise = page.waitForEvent('download');
+        await page.getByRole('button', { name: 'CSV İndir' }).click();
+        const csvDownload = await csvDownloadPromise;
+        expect(csvDownload.suggestedFilename()).toMatch(/^pulsus-personel-performans-.*\.csv$/);
     });
 });

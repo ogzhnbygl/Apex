@@ -14,6 +14,7 @@ const SOURCE_DBS = [
     'Dispo_db',
     'LabProject_db',
     'Locus_db',
+    'Pulsus_db',
     'Silo_db',
 ];
 

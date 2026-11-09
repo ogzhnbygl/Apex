@@ -14,7 +14,7 @@ const Admin = () => {
     const [submitting, setSubmitting] = useState(false);
     const [formData, setFormData] = useState({ name: '', email: '', password: '', role: 'user', apps: [] });
 
-    const availableApps = ['dispo', 'labproject', 'silo', 'circa', 'locus'];
+    const availableApps = ['dispo', 'labproject', 'silo', 'circa', 'locus', 'pulsus'];
 
     React.useEffect(() => {
         fetchUsers();

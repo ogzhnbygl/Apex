@@ -29,7 +29,8 @@ const SERVER_SPECS = [
     { name: 'Circa', port: 4172 },
     { name: 'Dispo', port: 4173 },
     { name: 'LabProject', port: 4174 },
-    { name: 'Silo', port: 4175 }
+    { name: 'Silo', port: 4175 },
+    { name: 'Pulsus', port: 4176 }
 ];
 
 export default defineConfig({
