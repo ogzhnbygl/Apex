@@ -543,6 +543,274 @@ describe('SUITE-2: 5 Kişilik Ekip ve Operasyonel Rol Kuralları (vet, technicia
             }
         }
     });
+
+    it('T2.5: SEC-04 Klinik karar talepleri (vet_request) yalnızca Veteriner Hekim tarafından onaylanabilir ve silme yetkisi sadece oluşturan/Vet ile sınırlıdır', async () => {
+        const client = await pulsusMongo.default;
+        const db = client.db(pulsusMongo.getDbName('Pulsus_db'));
+        const gamzeCookie = signSession(TECH_GAMZE, 'user');
+        const createdTaskIds = [];
+
+        try {
+            // 1. Kübra (Technician) creates a vet_request
+            const reqRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'POST',
+                    headers: { cookie: kubraCookie },
+                    body: {
+                        title: 'Kafes-4 post-op dikiş açılması muayene talebi',
+                        description: 'Hayvanda insizyon hattında ayrılma gözlemlendi, klinik değerlendirme rica ederiz.',
+                        taskType: 'vet_request',
+                        priority: 'critical',
+                        assignedTo: VET_EMAIL
+                    }
+                },
+                reqRes
+            );
+            assert.equal(reqRes.statusCode, 201);
+            const vetTaskId = String(reqRes.body.task._id);
+            createdTaskIds.push(reqRes.body.task._id);
+
+            // 2. Kübra (Technician) attempts to approve / complete clinical vet_request -> 403 Forbidden
+            const techApproveRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: kubraCookie },
+                    body: {
+                        id: vetTaskId,
+                        action: 'approve',
+                        note: 'Ben baktım sorun yok, kapatıyorum.'
+                    }
+                },
+                techApproveRes
+            );
+            assert.equal(techApproveRes.statusCode, 403);
+            assert.equal(
+                techApproveRes.body.error,
+                'Veteriner hekim muayene ve klinik karar talepleri yalnızca Sorumlu Veteriner Hekim tarafından onaylanıp kapatılabilir.'
+            );
+
+            // 3. Kübra attempts move_status to 'done' -> 403 Forbidden
+            const techDoneRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: kubraCookie },
+                    body: {
+                        id: vetTaskId,
+                        action: 'move_status',
+                        status: 'done'
+                    }
+                },
+                techDoneRes
+            );
+            assert.equal(techDoneRes.statusCode, 403);
+            assert.equal(
+                techDoneRes.body.error,
+                'Veteriner hekim muayene ve klinik karar talepleri yalnızca Sorumlu Veteriner Hekim tarafından onaylanıp kapatılabilir.'
+            );
+
+            // 4. Another Technician (Gamze) attempts to DELETE Kübra\'s task -> 403 Forbidden
+            const gamzeDelRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'DELETE',
+                    headers: { cookie: gamzeCookie },
+                    body: { id: vetTaskId }
+                },
+                gamzeDelRes
+            );
+            assert.equal(gamzeDelRes.statusCode, 403);
+            assert.equal(
+                gamzeDelRes.body.error,
+                'Bu görevi yalnızca oluşturan personel veya Sorumlu Veteriner Hekim silebilir.'
+            );
+
+            // 5. Sorumlu Veteriner Hekim (Vet) approves clinical vet_request -> 200 OK
+            const vetApproveRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: vetCookie },
+                    body: {
+                        id: vetTaskId,
+                        action: 'approve',
+                        note: 'Yara revize edildi ve antibiyotikli pomat uygulandı. Vaka kapatıldı.'
+                    }
+                },
+                vetApproveRes
+            );
+            assert.equal(vetApproveRes.statusCode, 200);
+            assert.equal(vetApproveRes.body.task.status, 'done');
+
+            // 6. Creator (Kübra) can DELETE her own task -> 200 OK
+            const creatorDelRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'DELETE',
+                    headers: { cookie: kubraCookie },
+                    body: { id: vetTaskId }
+                },
+                creatorDelRes
+            );
+            assert.equal(creatorDelRes.statusCode, 200);
+            assert.equal(creatorDelRes.body.success, true);
+        } finally {
+            if (createdTaskIds.length > 0) {
+                await db.collection('sequa_tasks').deleteMany({ _id: { $in: createdTaskIds } });
+            }
+        }
+    });
+
+    it('T2.6: SEC-01 Sequa yetkilendirme ve bakıcı yetki kalkanı (başkasının görevini değiştirme, kritik öncelik verme ve bakıcıya devretme engellenir)', async () => {
+        const client = await pulsusMongo.default;
+        const db = client.db(pulsusMongo.getDbName('Pulsus_db'));
+        const createdTaskIds = [];
+
+        try {
+            // 1. Technician (Kübra) creates a task assigned to Technician (Gamze)
+            const techTaskRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'POST',
+                    headers: { cookie: kubraCookie },
+                    body: {
+                        title: 'Otomatik Suluk Sistemi Basınç Regülatör Bakımı',
+                        taskType: 'task',
+                        priority: 'high',
+                        assignedTo: TECH_GAMZE
+                    }
+                },
+                techTaskRes
+            );
+            assert.equal(techTaskRes.statusCode, 201);
+            const techTaskId = String(techTaskRes.body.task._id);
+            createdTaskIds.push(techTaskRes.body.task._id);
+
+            // 2. Caretaker (Gökhan) attempts to mutate another user\'s task -> 403 Forbidden
+            const mutateOtherRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: gokhanCookie },
+                    body: {
+                        id: techTaskId,
+                        action: 'move_status',
+                        status: 'in_progress'
+                    }
+                },
+                mutateOtherRes
+            );
+            assert.equal(mutateOtherRes.statusCode, 403);
+            assert.equal(
+                mutateOtherRes.body.error,
+                'Bu görevin durumunu veya detaylarını güncelleme yetkiniz bulunmamaktadır.'
+            );
+
+            // 3. Caretaker (Gökhan) attempts to modify externalTicketNo of unowned task -> 403 Forbidden
+            const extTicketRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: gokhanCookie },
+                    body: {
+                        id: techTaskId,
+                        action: 'move_status',
+                        externalTicketNo: 'UNAUTHORIZED-999'
+                    }
+                },
+                extTicketRes
+            );
+            assert.equal(extTicketRes.statusCode, 403);
+            assert.equal(
+                extTicketRes.body.error,
+                'Bu görevin durumunu veya detaylarını güncelleme yetkiniz bulunmamaktadır.'
+            );
+
+            // 4. Caretaker (Gökhan) creates an issue_report assigned to Kübra
+            const careIssueRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'POST',
+                    headers: { cookie: gokhanCookie },
+                    body: {
+                        title: 'Karantina Odası Kapı Manyetik Kilidi Tutmuyor',
+                        taskType: 'issue_report',
+                        priority: 'medium',
+                        assignedTo: TECH_KUBRA
+                    }
+                },
+                careIssueRes
+            );
+            assert.equal(careIssueRes.statusCode, 201);
+            const careIssueId = String(careIssueRes.body.task._id);
+            createdTaskIds.push(careIssueRes.body.task._id);
+
+            // 5. Caretaker (Gökhan) attempts to raise priority to "critical" -> 403 Forbidden
+            const critRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: gokhanCookie },
+                    body: {
+                        id: careIssueId,
+                        action: 'move_status',
+                        priority: 'critical'
+                    }
+                },
+                critRes
+            );
+            assert.equal(critRes.statusCode, 403);
+            assert.equal(
+                critRes.body.error,
+                'Bu görevin durumunu veya detaylarını güncelleme yetkiniz bulunmamaktadır.'
+            );
+
+            // 6. Caretaker (Gökhan) attempts to reassign to another Caretaker (Yusuf) via edit_task -> 403 Forbidden
+            const reassignPeerRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: gokhanCookie },
+                    body: {
+                        id: careIssueId,
+                        action: 'edit_task',
+                        assignedTo: CARE_YUSUF
+                    }
+                },
+                reassignPeerRes
+            );
+            assert.equal(reassignPeerRes.statusCode, 403);
+            assert.equal(
+                reassignPeerRes.body.error,
+                'Bakıcı/Temizlik personeli diğer bir bakıcıya iş veya bildirim atayamaz; yalnızca Teknikere veya Veteriner Hekime bildirim açabilir.'
+            );
+
+            // 7. Assigned technician (Gamze) successfully updates her assigned task -> 200 OK
+            const gamzeCookie = signSession(TECH_GAMZE, 'user');
+            const authorizedUpdateRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: gamzeCookie },
+                    body: {
+                        id: techTaskId,
+                        action: 'move_status',
+                        status: 'in_progress',
+                        note: 'Bakıma başlandı.'
+                    }
+                },
+                authorizedUpdateRes
+            );
+            assert.equal(authorizedUpdateRes.statusCode, 200);
+            assert.equal(authorizedUpdateRes.body.task.status, 'in_progress');
+        } finally {
+            if (createdTaskIds.length > 0) {
+                await db.collection('sequa_tasks').deleteMany({ _id: { $in: createdTaskIds } });
+            }
+        }
+    });
 });
 
 describe('SUITE-3: Ritus Zamanlama, Cuma 16:30 Dağıtımı, Hafta Ortası Ay Geçişi ve Şablon Güncelleme Seçimi', () => {
@@ -562,6 +830,10 @@ describe('SUITE-3: Ritus Zamanlama, Cuma 16:30 Dağıtımı, Hafta Ortası Ay Ge
         let tempTplId = null;
 
         try {
+            await db
+                .collection('ritus_runs')
+                .deleteMany({ weekStart: { $in: [baseWeekMonday, nextWeekMonday] } });
+
             // Ensure at least one active weekly template exists for T3.1 even if Pulsus_test_db templates were cleared
             const tplIns = await db.collection('ritus_templates').insertOne({
                 title: 'CI Cuma 16:30 Dağıtım Test Şablonu',
@@ -1059,6 +1331,48 @@ describe('SUITE-4: Circa İzin Entegrasyonu ve Yedek (Backup) Devir Zinciri (Cir
             await circaDb.collection('time_offs').deleteMany({ _id: { $in: delIds } });
         }
     });
+
+    it('T4.5: SEC-05 Circa izin açıklamaları (description) /api/members üzerinden sızdırılmaz', async () => {
+        const client = await pulsusMongo.default;
+        const circaDb = client.db(pulsusMongo.getDbName('Circa_db'));
+        const testDate = '2099-04-10';
+
+        const inserted = await circaDb.collection('time_offs').insertOne({
+            name: 'Gökhan Sert',
+            email: CARE_GOKHAN,
+            unit: 'daily',
+            dates: [testDate],
+            totalHours: 8,
+            status: 'approved',
+            description: 'Çok gizli tıbbi sağlık raporu verisi'
+        });
+
+        try {
+            const res = mockRes();
+            await membersHandler(
+                {
+                    method: 'GET',
+                    headers: { cookie: gokhanCookie },
+                    query: { date: testDate }
+                },
+                res
+            );
+            assert.equal(res.statusCode, 200);
+            const gokhan = res.body.members.find(m => m.email === CARE_GOKHAN);
+            assert.ok(gokhan, 'Gökhan personel listesinde bulunmalıdır');
+            assert.equal(gokhan.onLeaveToday, true);
+            assert.ok(gokhan.todayLeaveInfo);
+            assert.equal(gokhan.todayLeaveInfo.unit, 'daily');
+            assert.strictEqual(gokhan.todayLeaveInfo.description, undefined, 'todayLeaveInfo description sızdırılmamalıdır');
+
+            assert.ok(Array.isArray(gokhan.upcomingLeaves));
+            const upMatch = gokhan.upcomingLeaves.find(l => l.dates.includes(testDate));
+            assert.ok(upMatch, 'Gelecek/mevcut izin listesinde bulunmalıdır');
+            assert.strictEqual(upMatch.description, undefined, 'upcomingLeaves description sızdırılmamalıdır');
+        } finally {
+            await circaDb.collection('time_offs').deleteOne({ _id: inserted.insertedId });
+        }
+    });
 });
 
 describe('SUITE-5: Denetim (Review), Tekrarlatma (needs_revision), Eskalasyon (escalated) ve Ritus -> Sequa Köprüsü', () => {
@@ -1115,6 +1429,19 @@ describe('SUITE-5: Denetim (Review), Tekrarlatma (needs_revision), Eskalasyon (e
     });
 
     it('T5.1: Bakıcı görevi denetime gönderir (pending_review), kendi görevini onaylayamaz (403); Tekniker "request_revision" ile tekrar ister -> status: "needs_revision", revisionCount: 1', async () => {
+        // SEC-02: Premature submit before start is rejected (must not be 'todo')
+        const prematureSubmitRes = mockRes();
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: gokhanCookie },
+                body: { id: String(testRunId), action: 'submit_for_review', note: 'Henüz başlatılmadı' }
+            },
+            prematureSubmitRes
+        );
+        assert.equal(prematureSubmitRes.statusCode, 400);
+        assert.equal(prematureSubmitRes.body.error, 'Görev başlatılmadan denetime gönderilemez.');
+
         // 1. Caretaker starts & submits for review
         const startRes = mockRes();
         await runsHandler(
@@ -1127,6 +1454,54 @@ describe('SUITE-5: Denetim (Review), Tekrarlatma (needs_revision), Eskalasyon (e
         );
         assert.equal(startRes.statusCode, 200);
         assert.equal(startRes.body.run.status, 'in_progress');
+
+        // SEC-02: Premature approve when in 'in_progress' is rejected
+        const prematureApproveRes = mockRes();
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: vetCookie },
+                body: { id: String(testRunId), action: 'approve' }
+            },
+            prematureApproveRes
+        );
+        assert.equal(prematureApproveRes.statusCode, 400);
+        assert.equal(prematureApproveRes.body.error, "'in_progress' durumundaki görev denetimden geçmeden onaylanamaz.");
+
+        // SEC-02: Submit with incomplete checklist is rejected
+        const incompleteSubmitRes = mockRes();
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: gokhanCookie },
+                body: {
+                    id: String(testRunId),
+                    action: 'submit_for_review',
+                    note: 'Eksik kontrol listesi'
+                }
+            },
+            incompleteSubmitRes
+        );
+        assert.equal(incompleteSubmitRes.statusCode, 400);
+        assert.equal(incompleteSubmitRes.body.error, 'Tüm kontrol listesi maddeleri tamamlanmadan denetime sunulamaz.');
+
+        // Caretaker completes all checklist items
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: gokhanCookie },
+                body: { id: String(testRunId), action: 'toggle_checklist', checklistItemId: 0 }
+            },
+            mockRes()
+        );
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: gokhanCookie },
+                body: { id: String(testRunId), action: 'toggle_checklist', checklistItemId: 1 }
+            },
+            mockRes()
+        );
 
         const submitRes = mockRes();
         await runsHandler(
@@ -1224,6 +1599,122 @@ describe('SUITE-5: Denetim (Review), Tekrarlatma (needs_revision), Eskalasyon (e
         assert.equal(approveRes.body.run.status, 'done');
         assert.equal(approveRes.body.run.approvedBy, VET_EMAIL);
     });
+
+    it('T5.4: SEC-02 Durum Makinesi Bütünlüğü (Tamamlanmış Ritus görevi yeniden başlatılamaz/checklist değiştirilemez; Sequa review dışı doğrudan onaylanamaz)', async () => {
+        // 1. Ritus: run is already 'done' after T5.3
+        const restartRes = mockRes();
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: gokhanCookie },
+                body: { id: String(testRunId), action: 'start' }
+            },
+            restartRes
+        );
+        assert.equal(restartRes.statusCode, 400);
+        assert.equal(restartRes.body.error, 'Tamamlanmış bir görev tekrar başlatılamaz.');
+
+        const toggleDoneRes = mockRes();
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: gokhanCookie },
+                body: { id: String(testRunId), action: 'toggle_checklist', checklistItemId: 0 }
+            },
+            toggleDoneRes
+        );
+        assert.equal(toggleDoneRes.statusCode, 400);
+        assert.equal(toggleDoneRes.body.error, 'Tamamlanmış ve onaylanmış görevlerin kontrol listesi değiştirilemez.');
+
+        const revOnDoneRes = mockRes();
+        await runsHandler(
+            {
+                method: 'PATCH',
+                headers: { cookie: vetCookie },
+                body: { id: String(testRunId), action: 'request_revision', note: 'Geçersiz revizyon isteği' }
+            },
+            revOnDoneRes
+        );
+        assert.equal(revOnDoneRes.statusCode, 400);
+        assert.equal(revOnDoneRes.body.error, 'Yalnızca denetim bekleyen (pending_review) görevler için revizyon talep edilebilir.');
+
+        // 2. Sequa: task in 'todo' / 'in_progress' cannot be approved directly
+        const client = await pulsusMongo.default;
+        const db = client.db(pulsusMongo.getDbName('Pulsus_db'));
+        const createSequaRes = mockRes();
+        await sequaTasksHandler(
+            {
+                method: 'POST',
+                headers: { cookie: vetCookie },
+                body: {
+                    title: 'SEC-02 Sequa Durum Makinesi Bütünlük Testi',
+                    taskType: 'task',
+                    priority: 'medium',
+                    assignedTo: TECH_KUBRA
+                }
+            },
+            createSequaRes
+        );
+        assert.equal(createSequaRes.statusCode, 201);
+        const sequaTask = createSequaRes.body.task;
+        assert.equal(sequaTask.status, 'todo');
+
+        try {
+            // Attempt to approve directly from 'todo' -> 400
+            const approveTodoRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: vetCookie },
+                    body: { id: String(sequaTask._id), action: 'approve' }
+                },
+                approveTodoRes
+            );
+            assert.equal(approveTodoRes.statusCode, 400);
+            assert.equal(approveTodoRes.body.error, 'Görev tamamlanmadan veya denetime sunulmadan doğrudan onaylanamaz.');
+
+            // Attempt to approve via status: 'done' directly from 'todo' -> 400
+            const statusDoneRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: vetCookie },
+                    body: { id: String(sequaTask._id), status: 'done', action: 'move_status' }
+                },
+                statusDoneRes
+            );
+            assert.equal(statusDoneRes.statusCode, 400);
+            assert.equal(statusDoneRes.body.error, 'Görev tamamlanmadan veya denetime sunulmadan doğrudan onaylanamaz.');
+
+            // Move to 'review' first
+            const moveToReviewRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: kubraCookie },
+                    body: { id: String(sequaTask._id), status: 'review', action: 'move_status' }
+                },
+                moveToReviewRes
+            );
+            assert.equal(moveToReviewRes.statusCode, 200);
+            assert.equal(moveToReviewRes.body.task.status, 'review');
+
+            // Now approve succeeds
+            const validApproveRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: vetCookie },
+                    body: { id: String(sequaTask._id), action: 'approve' }
+                },
+                validApproveRes
+            );
+            assert.equal(validApproveRes.statusCode, 200);
+            assert.equal(validApproveRes.body.task.status, 'done');
+        } finally {
+            await db.collection('sequa_tasks').deleteOne({ _id: sequaTask._id });
+        }
+    });
 });
 
 describe('SUITE-6: Raporlama (GET /api/reports)', () => {
@@ -1243,6 +1734,13 @@ describe('SUITE-6: Raporlama (GET /api/reports)', () => {
         assert.equal(typeof sampleStaff.totalRevisionsReceived, 'number');
         assert.equal(typeof sampleStaff.escalatedCount, 'number');
         assert.equal(typeof sampleStaff.delegatedOutByLeave, 'number');
+    });
+
+    it('T6.2: Caretaker veya Technician /api/reports çağırırsa 403 döner (SEC-03)', async () => {
+        const nonVetRes = mockRes();
+        await reportsHandler({ method: 'GET', headers: { cookie: kubraCookie }, query: {} }, nonVetRes);
+        assert.equal(nonVetRes.statusCode, 403);
+        assert.equal(nonVetRes.body.error, 'Raporları ve performans verilerini yalnızca Sorumlu Veteriner Hekim görüntüleyebilir.');
     });
 });
 
