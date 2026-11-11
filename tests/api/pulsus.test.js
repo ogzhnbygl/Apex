@@ -644,7 +644,7 @@ describe('SUITE-2: 5 Kişilik Ekip ve Operasyonel Rol Kuralları (vet, technicia
             assert.equal(vetApproveRes.statusCode, 200);
             assert.equal(vetApproveRes.body.task.status, 'done');
 
-            // 6. Creator (Kübra) can DELETE her own task -> 200 OK
+            // 6. Creator (Kübra) attempts to DELETE completed/reviewed task -> 403 Forbidden (requires Vet or Admin)
             const creatorDelRes = mockRes();
             await sequaTasksHandler(
                 {
@@ -654,8 +654,20 @@ describe('SUITE-2: 5 Kişilik Ekip ve Operasyonel Rol Kuralları (vet, technicia
                 },
                 creatorDelRes
             );
-            assert.equal(creatorDelRes.statusCode, 200);
-            assert.equal(creatorDelRes.body.success, true);
+            assert.equal(creatorDelRes.statusCode, 403);
+
+            // 7. Sorumlu Veteriner Hekim (Vet) can DELETE completed/reviewed task -> 200 OK
+            const vetDelRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'DELETE',
+                    headers: { cookie: vetCookie },
+                    body: { id: vetTaskId }
+                },
+                vetDelRes
+            );
+            assert.equal(vetDelRes.statusCode, 200);
+            assert.equal(vetDelRes.body.success, true);
         } finally {
             if (createdTaskIds.length > 0) {
                 await db.collection('sequa_tasks').deleteMany({ _id: { $in: createdTaskIds } });
@@ -1686,7 +1698,20 @@ describe('SUITE-5: Denetim (Review), Tekrarlatma (needs_revision), Eskalasyon (e
             assert.equal(statusDoneRes.statusCode, 400);
             assert.equal(statusDoneRes.body.error, 'Görev tamamlanmadan veya denetime sunulmadan doğrudan onaylanamaz.');
 
-            // Move to 'review' first
+            // Move through valid state machine: todo -> in_progress -> review
+            const moveToProgressRes = mockRes();
+            await sequaTasksHandler(
+                {
+                    method: 'PATCH',
+                    headers: { cookie: kubraCookie },
+                    body: { id: String(sequaTask._id), status: 'in_progress', action: 'move_status' }
+                },
+                moveToProgressRes
+            );
+            assert.equal(moveToProgressRes.statusCode, 200);
+            assert.equal(moveToProgressRes.body.task.status, 'in_progress');
+
+            // Move to 'review'
             const moveToReviewRes = mockRes();
             await sequaTasksHandler(
                 {
